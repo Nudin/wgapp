@@ -68,17 +68,24 @@ def mark_todo_due(todo_id: int, db: Session = Depends(get_db)):
 
 
 # Postpone a todo by adding the frequency to the current next_due_date
-@app.put("/todos/{todo_id}/postpone", response_model=schemas.TodoResponse)
-def postpone_todo_due(todo_id: int, db: Session = Depends(get_db)):
-    db_todo = db.query(models.Todo).filter(models.Todo.id == todo_id).first()
-    if not db_todo:
+@app.post("/todos/{todo_id}/postpone/")
+def postpone_todo(
+    todo_id: int,
+    postpone_request: schemas.PostponeRequest,
+    db: Session = Depends(get_db),
+):
+    todo = db.query(models.Todo).filter(models.Todo.id == todo_id).first()
+    if not todo:
         raise HTTPException(status_code=404, detail="Todo not found")
 
-    db_todo.postpone()
-
+    # Update the next_due_date to the new date provided
+    todo.next_due_date = postpone_request.new_due_date
     db.commit()
-    db.refresh(db_todo)
-    return db_todo
+
+    return {
+        "message": "Todo postponed successfully",
+        "next_due_date": todo.next_due_date,
+    }
 
 
 # List all logs, now including the associated todo's name

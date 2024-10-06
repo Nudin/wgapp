@@ -1,5 +1,6 @@
-from pydantic import BaseModel
 from datetime import date
+
+from pydantic import BaseModel
 
 
 # Todo creation schema
@@ -40,3 +41,7 @@ class LogResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class PostponeRequest(BaseModel):
+    new_due_date: date

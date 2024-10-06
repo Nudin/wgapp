@@ -65,9 +65,32 @@ async function markTodoDone(todoId) {
 
 // Postpone a Todo
 async function postponeTodo(todoId) {
-    await fetch(`${apiBaseUrl}/todos/${todoId}/postpone`, { method: 'PUT' });
-    fetchTodos();
+    const newDueDate = prompt("Please enter the new due date (YYYY-MM-DD):");
+
+    if (newDueDate) {
+        try {
+            const response = await fetch(`/todos/${todoId}/postpone/`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ new_due_date: newDueDate }),
+            });
+
+            if (!response.ok) {
+                throw new Error("Network response was not ok");
+            }
+
+            const result = await response.json();
+            alert(result.message);
+            fetchTodos(); // Refresh the todo list after postponing
+        } catch (error) {
+            console.error("Error postponing todo:", error);
+            alert("Failed to postpone todo. Please try again.");
+        }
+    }
 }
+
 
 // Mark a Todo as Due Today
 async function markTodoDue(todoId) {
