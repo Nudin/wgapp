@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo WebApp</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Todo WebApp</h1>
+
+        <!-- Form to add new Todo -->
+        <div class="form-section">
+            <h2>Add New Todo</h2>
+            <form id="addTodoForm">
+                <input type="text" id="todoName" placeholder="Todo Name" required>
+                <textarea id="todoDescription" placeholder="Todo Description"></textarea>
+                <input type="number" id="todoFrequency" placeholder="Frequency (days)" required>
+                <input type="date" id="todoNextDueDate" required>
+                <button type="submit">Add Todo</button>
+            </form>
+        </div>
+
+        <!-- List of Todos -->
+        <div class="todo-section">
+            <h2>Todos</h2>
+            <ul id="todoList"></ul>
+        </div>
+
+        <!-- Logs -->
+        <div class="log-section">
+            <h2>Logs</h2>
+            <ul id="logList"></ul>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
