@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy import asc
 from sqlalchemy.orm import Session
 
@@ -9,6 +10,8 @@ import schemas
 from database import engine, get_db
 
 app = FastAPI()
+
+app.mount("/webapp", StaticFiles(directory="webapp"), name="webapp")
 
 # Create database tables
 models.Base.metadata.create_all(bind=engine)
