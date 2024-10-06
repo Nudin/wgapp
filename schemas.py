@@ -1,6 +1,5 @@
-from datetime import date
-
 from pydantic import BaseModel
+from datetime import date
 
 
 # Todo creation schema
@@ -31,11 +30,13 @@ class TodoMarkDone(BaseModel):
     username: str
 
 
+# Modify LogResponse to include the Todo name
 class LogResponse(BaseModel):
     id: int
     todo_id: int
     username: str
     done_date: date
+    todo_name: str  # Add todo_name field to show the name of the todo
 
     class Config:
         from_attributes = True

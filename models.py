@@ -1,8 +1,8 @@
-from datetime import date, timedelta
+from sqlalchemy import Column, Integer, String, Date, ForeignKey
+from sqlalchemy.orm import relationship
+from datetime import timedelta, date
 
 from database import Base
-from sqlalchemy import Column, Date, ForeignKey, Integer, String
-from sqlalchemy.orm import relationship
 
 
 class Todo(Base):

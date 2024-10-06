@@ -1,3 +1,5 @@
+from fastapi import FastAPI, Depends, HTTPException
+from sqlalchemy.orm import Session
 from datetime import date
 
 # from . import models, schemas
@@ -37,7 +39,6 @@ def mark_todo_done(
     if not db_todo:
         raise HTTPException(status_code=404, detail="Todo not found")
 
-    # Mark the todo as done (update the next due date)
     db_todo.mark_done()
 
     # Log the action
@@ -63,11 +64,24 @@ def mark_todo_due(todo_id: int, db: Session = Depends(get_db)):
     return db_todo
 
 
-# List all logs (Optional, for debugging or tracking purposes)
+# List all logs, now including the associated todo's name
 @app.get("/logs/", response_model=list[schemas.LogResponse])
 def get_logs(db: Session = Depends(get_db)):
     logs = db.query(models.Log).all()
-    return logs
+
+    # Construct the response to include todo_name
+    response = []
+    for log in logs:
+        log_response = schemas.LogResponse(
+            id=log.id,
+            todo_id=log.todo_id,
+            username=log.username,
+            done_date=log.done_date,
+            todo_name=log.todo.name,  # Access the name of the associated todo
+        )
+        response.append(log_response)
+
+    return response
 
 
 # List all todos
