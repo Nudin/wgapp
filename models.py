@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, String, Date, ForeignKey
+from datetime import date, timedelta
+
+from sqlalchemy import Column, Date, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
-from datetime import timedelta, date
 
 from database import Base
 
@@ -18,11 +19,14 @@ class Todo(Base):
 
     def mark_done(self):
         # Update next_due_date by adding the frequency (in days)
-        self.next_due_date += timedelta(days=self.frequency)
+        self.next_due_date = date.today() + timedelta(days=self.frequency)
 
     def mark_due(self):
         # Set next_due_date to today's date
         self.next_due_date = date.today()
+
+    def postpone(self):
+        self.next_due_date = date.today() + timedelta(days=self.frequency) // 2
 
 
 class Log(Base):

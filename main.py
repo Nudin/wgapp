@@ -1,13 +1,11 @@
-from fastapi import FastAPI, Depends, HTTPException
-from sqlalchemy.orm import Session
-from datetime import date
+from datetime import date, timedelta
 
-# from . import models, schemas
+from fastapi import Depends, FastAPI, HTTPException
+from sqlalchemy.orm import Session
+
 import models
 import schemas
 from database import engine, get_db
-from fastapi import Depends, FastAPI, HTTPException
-from sqlalchemy.orm import Session
 
 app = FastAPI()
 
@@ -59,6 +57,21 @@ def mark_todo_due(todo_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Todo not found")
 
     db_todo.mark_due()
+
+    db.commit()
+    db.refresh(db_todo)
+    return db_todo
+
+
+# Postpone a todo by adding the frequency to the current next_due_date
+@app.put("/todos/{todo_id}/postpone", response_model=schemas.TodoResponse)
+def postpone_todo_due(todo_id: int, db: Session = Depends(get_db)):
+    db_todo = db.query(models.Todo).filter(models.Todo.id == todo_id).first()
+    if not db_todo:
+        raise HTTPException(status_code=404, detail="Todo not found")
+
+    db_todo.postpone()
+
     db.commit()
     db.refresh(db_todo)
     return db_todo
