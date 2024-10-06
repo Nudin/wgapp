@@ -1,4 +1,4 @@
-const apiBaseUrl = 'http://127.0.0.1:8000';  // Adjust the base URL as necessary
+const apiBaseUrl = '';  // Adjust the base URL as necessary
 
 // DOM Elements
 const todoList = document.getElementById('todoList');
