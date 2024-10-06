@@ -9,14 +9,20 @@ const addTodoForm = document.getElementById('addTodoForm');
 async function fetchTodos() {
     const response = await fetch(`${apiBaseUrl}/todos/`);
     const todos = await response.json();
+    const todoList = document.getElementById("todoList");
+    todoList.innerHTML = ""; // Clear existing list
 
-    todoList.innerHTML = '';
+    const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+
     todos.forEach(todo => {
         const todoItem = document.createElement('li');
         todoItem.innerHTML = `
             <div>
-                <strong>${todo.name}</strong> - Next Due: ${todo.next_due_date} <br>
+                <strong>${todo.name}</strong><br>
                 ${todo.description}
+            </div>
+            <div class="duedate ${todo.next_due_date <= today ? 'overdue' : ''}">
+                ${new Date(todo.next_due_date).toLocaleDateString()}
             </div>
             <div>
                 <button onclick="markTodoDone(${todo.id})">Mark as Done</button>
@@ -37,7 +43,7 @@ async function fetchLogs() {
     logs.forEach(log => {
         const logItem = document.createElement('li');
         logItem.innerHTML = `
-            <strong>${log.todo_name}</strong> - Completed by: ${log.username} on ${log.done_date}
+            <strong>${log.todo_name}</strong> - Completed by: <strong>${log.username}</strong> on ${log.done_date}
         `;
         logList.appendChild(logItem);
     });
@@ -93,3 +99,19 @@ addTodoForm.addEventListener('submit', async (e) => {
 // Initial Fetch of Todos and Logs
 fetchTodos();
 fetchLogs();
+
+// Tab Management
+function openTab(evt, tabName) {
+    const tabcontent = document.getElementsByClassName("tabcontent");
+    for (let i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].classList.remove("active");
+    }
+
+    const tablinks = document.getElementsByClassName("tablinks");
+    for (let i = 0; i < tablinks.length; i++) {
+        tablinks[i].classList.remove("active");
+    }
+
+    document.getElementById(tabName).classList.add("active");
+    evt.currentTarget.classList.add("active");
+}

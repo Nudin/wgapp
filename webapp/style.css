@@ -31,6 +31,42 @@ h2 {
     color: #555;
 }
 
+.tab {
+    overflow: hidden;
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 20px;
+}
+
+.tab button {
+    background-color: #007bff; /* Default color */
+    color: white;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 14px 30px;
+    margin: 0 5px;
+    border-radius: 5px;
+    font-size: 17px;
+    transition: background-color 0.3s;
+}
+
+.tab button:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+}
+
+.tab button.active {
+    background-color: #28a745; /* Green color for the active tab */
+}
+
+.tabcontent {
+    display: none; /* Hidden by default */
+}
+
+.tabcontent.active {
+    display: block; /* Show active tab content */
+}
+
 form {
     display: flex;
     flex-direction: column;
@@ -72,4 +108,13 @@ li {
 
 li button {
     margin-left: 10px;
+}
+
+.duedate {
+    margin-left: auto;
+    margin-right: 1em;
+}
+.overdue {
+    color: red; /* Red color for overdue dates */
+    font-weight: bold; /* Bold text for overdue dates */
 }

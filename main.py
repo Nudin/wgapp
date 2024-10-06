@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 
 from fastapi import Depends, FastAPI, HTTPException
+from sqlalchemy import asc
 from sqlalchemy.orm import Session
 
 import models
@@ -99,6 +100,12 @@ def get_logs(db: Session = Depends(get_db)):
 
 # List all todos
 @app.get("/todos/", response_model=list[schemas.TodoResponse])
-def read_todos(db: Session = Depends(get_db)):
-    todos = db.query(models.Todo).all()
+def read_todos(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
+    todos = (
+        db.query(models.Todo)
+        .order_by(asc(models.Todo.next_due_date))
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )  # Order by next_due_date
     return todos
