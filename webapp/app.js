@@ -19,7 +19,7 @@ async function fetchTodos() {
         todoItem.innerHTML = `
             <div>
                 <strong>${todo.name}</strong><br>
-                ${todo.description}
+            ${todo.description} <em>(every ${todo.frequency} days)</em>
             </div>
             <div class="duedate ${dueClass}">
                 ${new Date(todo.next_due_date).toLocaleDateString()}
@@ -97,7 +97,8 @@ async function markTodoDone(todoId) {
 
 // Postpone a Todo
 async function postponeTodo(todoId) {
-    const newDueDate = prompt("Please enter the new due date (YYYY-MM-DD):");
+    const newDueDate = prompt("Please enter the new due date (YYYY-MM-DD):",
+                              new Date().toISOString().split('T')[0]);
 
     if (newDueDate) {
         try {
