@@ -25,9 +25,9 @@ async function fetchTodos() {
                 ${new Date(todo.next_due_date).toLocaleDateString()}
             </div>
             <div>
-                <button onclick="markTodoDone(${todo.id})">Mark as Done</button>
-                <button onclick="postponeTodo(${todo.id})">Postpone</button>
-                <button onclick="markTodoDue(${todo.id})">Mark as Due</button>
+                <button onclick="markTodoDone(${todo.id})">✅ Done</button>
+                <button onclick="markTodoDue(${todo.id})">🔥 Due now!</button>
+                <button onclick="postponeTodo(${todo.id})">❎ Postpone</button>
             </div>
         `;
         todoList.appendChild(todoItem);
