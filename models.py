@@ -23,7 +23,8 @@ class Todo(Base):
 
     def mark_due(self):
         # Set next_due_date to today's date
-        self.next_due_date = date.today()
+        if self.next_due_date > date.today():
+            self.next_due_date = date.today()
 
     def postpone(self):
         self.next_due_date = date.today() + timedelta(days=self.frequency) // 2

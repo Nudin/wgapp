@@ -135,7 +135,7 @@ def get_logs(db: Session = Depends(get_db)):
 
 # List all todos
 @app.get("/todos/", response_model=list[schemas.TodoResponse])
-def read_todos(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
+def read_todos(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     todos = (
         db.query(models.Todo)
         .order_by(asc(models.Todo.next_due_date))
@@ -143,4 +143,20 @@ def read_todos(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
         .limit(limit)
         .all()
     )  # Order by next_due_date
-    return todos
+    today = date.today()
+
+    result = []
+    for todo in todos:
+        is_due = todo.next_due_date <= today
+        result.append(
+            {
+                "id": todo.id,
+                "name": todo.name,
+                "description": todo.description,
+                "frequency": todo.frequency,
+                "next_due_date": todo.next_due_date,
+                "due": is_due,
+            }
+        )
+
+    return result

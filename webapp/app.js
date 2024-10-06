@@ -12,22 +12,22 @@ async function fetchTodos() {
     const todoList = document.getElementById("todoList");
     todoList.innerHTML = ""; // Clear existing list
 
-    const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
-
     todos.forEach(todo => {
         const todoItem = document.createElement('li');
+        const dueDate = new Date(todo.next_due_date).toLocaleDateString();
+        const dueClass = todo.due ? 'overdue' : '';
         todoItem.innerHTML = `
             <div>
                 <strong>${todo.name}</strong><br>
                 ${todo.description}
             </div>
-            <div class="duedate ${todo.next_due_date <= today ? 'overdue' : ''}">
+            <div class="duedate ${dueClass}">
                 ${new Date(todo.next_due_date).toLocaleDateString()}
             </div>
             <div>
                 <button onclick="markTodoDone(${todo.id})">✅ Done</button>
-                <button onclick="markTodoDue(${todo.id})">🔥 Due now!</button>
-                <button onclick="postponeTodo(${todo.id})">❎ Postpone</button>
+                ${!todo.due ? `<button onclick="markTodoDue(${todo.id})">🔥 Due now!</button>` : ''}
+                ${todo.due ? `<button onclick="postponeTodo(${todo.id})">❎ Postpone</button>` : ''}
                 <button onclick='editTodoButton(${JSON.stringify(todo)})'>⚙️ Edit</button>
             </div>
         `;
