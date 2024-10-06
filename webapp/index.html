@@ -41,6 +41,28 @@
             <ul id="logList"></ul>
         </div>
     </div>
+        <!-- Modal for Editing Todo -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Edit Todo</h2>
+            <form id="editTodoForm">
+                <label for="editName">Name</label>
+                <input type="text" id="editName" name="name" placeholder="Enter new name">
+                
+                <label for="editDescription">Description</label>
+                <input type="text" id="editDescription" name="description" placeholder="Enter new description">
+                
+                <label for="editFrequency">Frequency (days)</label>
+                <input type="number" id="editFrequency" name="frequency" placeholder="Enter new frequency in days">
+                
+                <label for="editDueDate">Next Due Date</label>
+                <input type="date" id="editDueDate" name="next_due_date">
+
+                <button type="button" onclick="submitEditTodo()">Save Changes</button>
+            </form>
+        </div>
+    </div>
 
     <script src="app.js"></script>
 </body>

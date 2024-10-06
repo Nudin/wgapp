@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -45,3 +46,10 @@ class LogResponse(BaseModel):
 
 class PostponeRequest(BaseModel):
     new_due_date: date
+
+
+class UpdateTodoRequest(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    frequency: Optional[int] = None
+    next_due_date: Optional[date] = None

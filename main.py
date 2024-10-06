@@ -32,6 +32,31 @@ def create_todo(todo: schemas.TodoCreate, db: Session = Depends(get_db)):
     return db_todo
 
 
+@app.put("/todos/{todo_id}/")
+def update_todo(
+    todo_id: int,
+    update_request: schemas.UpdateTodoRequest,
+    db: Session = Depends(get_db),
+):
+    todo = db.query(models.Todo).filter(models.Todo.id == todo_id).first()
+    if not todo:
+        raise HTTPException(status_code=404, detail="Todo not found")
+
+    # Update fields if they are provided in the request
+    if update_request.name is not None:
+        todo.name = update_request.name
+    if update_request.description is not None:
+        todo.description = update_request.description
+    if update_request.frequency is not None:
+        todo.frequency = update_request.frequency
+    if update_request.next_due_date is not None:
+        todo.next_due_date = update_request.next_due_date
+
+    db.commit()
+
+    return {"message": "Todo updated successfully", "todo": todo}
+
+
 # Mark a todo as done (update next_due_date by adding frequency) and log it
 @app.put("/todos/{todo_id}/done", response_model=schemas.TodoResponse)
 def mark_todo_done(

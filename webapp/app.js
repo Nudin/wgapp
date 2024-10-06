@@ -28,6 +28,7 @@ async function fetchTodos() {
                 <button onclick="markTodoDone(${todo.id})">✅ Done</button>
                 <button onclick="markTodoDue(${todo.id})">🔥 Due now!</button>
                 <button onclick="postponeTodo(${todo.id})">❎ Postpone</button>
+                <button onclick='editTodoButton(${JSON.stringify(todo)})'>⚙️ Edit</button>
             </div>
         `;
         todoList.appendChild(todoItem);
@@ -138,3 +139,67 @@ function openTab(evt, tabName) {
     document.getElementById(tabName).classList.add("active");
     evt.currentTarget.classList.add("active");
 }
+
+let currentTodoId = null; // Variable to hold the current todo ID being edited
+
+// Function to open the modal with the current todo's data
+function openEditModal(todoId, name, description, frequency, nextDueDate) {
+    currentTodoId = todoId; // Set the current todo ID
+    
+    // Populate the form with the current todo values
+    document.getElementById('editName').value = name;
+    document.getElementById('editDescription').value = description;
+    document.getElementById('editFrequency').value = frequency;
+    document.getElementById('editDueDate').value = nextDueDate;
+
+    // Display the modal
+    document.getElementById('editModal').style.display = 'block';
+}
+
+// Function to close the modal
+function closeModal() {
+    document.getElementById('editModal').style.display = 'none';
+}
+
+// Function to submit the edited todo
+async function submitEditTodo() {
+    const name = document.getElementById('editName').value;
+    const description = document.getElementById('editDescription').value;
+    const frequency = document.getElementById('editFrequency').value;
+    const nextDueDate = document.getElementById('editDueDate').value;
+
+    // Create an object to hold the updates
+    const updates = {};
+    if (name) updates.name = name;
+    if (description) updates.description = description;
+    if (frequency) updates.frequency = parseInt(frequency, 10);
+    if (nextDueDate) updates.next_due_date = nextDueDate;
+
+    try {
+        const response = await fetch(`/todos/${currentTodoId}/`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(updates),
+        });
+
+        if (!response.ok) {
+            throw new Error("Network response was not ok");
+        }
+
+        const result = await response.json();
+        alert(result.message);
+        closeModal(); // Close the modal after successful submission
+        fetchTodos(); // Refresh the todo list after updating
+    } catch (error) {
+        console.error("Error updating todo:", error);
+        alert("Failed to update todo. Please try again.");
+    }
+}
+
+// Function to open the edit modal when the "Edit" button is clicked
+function editTodoButton(todo) {
+    openEditModal(todo.id, todo.name, todo.description, todo.frequency, todo.next_due_date);
+}
+
