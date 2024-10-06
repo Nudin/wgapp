@@ -184,3 +184,19 @@ form button {
 form button:hover {
     background-color: #45a049;
 }
+
+#stats-section, #log-list {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #f4f4f4;
+    border-radius: 8px;
+}
+
+#stats-section li {
+    margin: 5px 0;
+    font-size: 1.1em;
+}
+
+#log-list li {
+    margin: 10px 0;
+}

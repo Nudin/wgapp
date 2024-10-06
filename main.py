@@ -2,7 +2,7 @@ from datetime import date, timedelta
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
-from sqlalchemy import asc
+from sqlalchemy import asc, func
 from sqlalchemy.orm import Session
 
 import models
@@ -160,3 +160,23 @@ def read_todos(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
         )
 
     return result
+
+
+@app.get("/stats")
+def get_task_statistics(db: Session = Depends(get_db)):
+    # Query the log table to count how many tasks each user has completed
+    results = (
+        db.query(models.Log.username, func.count(models.Log.id).label("task_count"))
+        .group_by(models.Log.username)
+        .all()
+    )
+
+    # Create a response with each user and their task completion count
+    stats = {
+        "user_stats": [
+            {"username": result.username, "task_count": result.task_count}
+            for result in results
+        ]
+    }
+
+    return stats

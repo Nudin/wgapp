@@ -37,18 +37,49 @@ async function fetchTodos() {
 
 // Fetch Logs from API and display them
 async function fetchLogs() {
-    const response = await fetch(`${apiBaseUrl}/logs/`);
-    const logs = await response.json();
+    try {
+        const response = await fetch(`${apiBaseUrl}/logs/`);
+        const logs = await response.json();
+        const logList = document.getElementById('log-list');
 
-    logList.innerHTML = '';
-    logs.forEach(log => {
-        const logItem = document.createElement('li');
-        logItem.innerHTML = `
-            <strong>${log.todo_name}</strong> - Completed by: <strong>${log.username}</strong> on ${log.done_date}
-        `;
-        logList.appendChild(logItem);
-    });
+        logList.innerHTML = '';
+        logs.forEach(log => {
+            const logItem = document.createElement('li');
+            const completionDate = new Date(log.done_date).toLocaleDateString();
+
+            logItem.innerHTML = `
+                <strong>${log.todo_name}</strong> <span>Completed by: <strong>${log.username}</strong></span> on ${log.done_date}
+            `;
+
+            logList.appendChild(logItem);
+        });
+
+        // After fetching logs, fetch the statistics
+        await fetchStatistics();
+    } catch (error) {
+        console.error('Error fetching logs:', error);
+    }
 }
+
+// Function to fetch statistics and display them
+async function fetchStatistics() {
+    try {
+        const response = await fetch('/stats');
+        const stats = await response.json();
+        const statsSection = document.getElementById('stats-section');
+        statsSection.innerHTML = '';  // Clear any previous content
+
+        console.log(stats)
+        stats["user_stats"].forEach(stat => {
+            const statItem = document.createElement('li');
+            statItem.innerHTML = `<strong>${stat.username}</strong>: ${stat.task_count} tasks completed`;
+            statsSection.appendChild(statItem);
+        });
+    } catch (error) {
+        console.error('Error fetching statistics:', error);
+    }
+}
+
 
 // Mark a Todo as Done
 async function markTodoDone(todoId) {
