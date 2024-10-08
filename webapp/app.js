@@ -199,6 +199,7 @@ async function submitEditTodo() {
     const description = document.getElementById('editDescription').value;
     const frequency = document.getElementById('editFrequency').value;
     const nextDueDate = document.getElementById('editDueDate').value;
+    const archived = document.getElementById('editArchived').value == "on";
 
     // Create an object to hold the updates
     const updates = {};
@@ -206,6 +207,7 @@ async function submitEditTodo() {
     if (description) updates.description = description;
     if (frequency) updates.frequency = parseInt(frequency, 10);
     if (nextDueDate) updates.next_due_date = nextDueDate;
+    updates.archived = archived;
 
     try {
         const response = await fetch(`/todos/${currentTodoId}/`, {

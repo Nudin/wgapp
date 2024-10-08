@@ -10,6 +10,7 @@ class TodoCreate(BaseModel):
     description: str | None = None
     frequency: int  # Frequency in days
     next_due_date: date
+    archived: bool = False
 
 
 class TodoUpdate(BaseModel):
@@ -54,3 +55,4 @@ class UpdateTodoRequest(BaseModel):
     description: Optional[str] = None
     frequency: Optional[int] = None
     next_due_date: Optional[date] = None
+    archived: Optional[bool] = False

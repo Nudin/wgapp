@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 
-from sqlalchemy import Column, Date, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, Date, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
 from database import Base
@@ -14,6 +14,7 @@ class Todo(Base):
     description = Column(String, nullable=True)
     frequency = Column(Integer, nullable=False)  # Frequency in days
     next_due_date = Column(Date, nullable=False)
+    archived = Column(Boolean, default=False)
 
     logs = relationship("Log", back_populates="todo")
 

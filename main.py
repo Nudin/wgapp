@@ -51,6 +51,8 @@ def update_todo(
         todo.frequency = update_request.frequency
     if update_request.next_due_date is not None:
         todo.next_due_date = update_request.next_due_date
+    if update_request.archived is not None:
+        todo.archived = update_request.archived
 
     db.commit()
 
@@ -135,9 +137,15 @@ def get_logs(db: Session = Depends(get_db)):
 
 # List all todos
 @app.get("/todos/", response_model=list[schemas.TodoResponse])
-def read_todos(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+def read_todos(
+    skip: int = 0,
+    limit: int = 100,
+    archived: bool = False,
+    db: Session = Depends(get_db),
+):
     todos = (
         db.query(models.Todo)
+        .filter_by(archived=archived)
         .order_by(asc(models.Todo.next_due_date))
         .offset(skip)
         .limit(limit)
