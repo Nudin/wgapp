@@ -1,0 +1,19 @@
+Selfhosted todo webapp for a shared flat
+========================================
+
+# Run for development
+
+Optionally create a venv. Then:
+
+     $ pip install -r requirements.txt
+     $ uvicorn main:app --reload
+
+# DB Migrations
+
+When changing the DB format first create the migration script:
+
+     $ alembic revision --autogenerate -m "add some column to todos"
+
+Then run the migration:
+
+     $ alembic upgrade head
