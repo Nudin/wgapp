@@ -1,12 +1,15 @@
 from datetime import date, timedelta
 
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import asc, func
 from sqlalchemy.orm import Session
 
 import models
 import schemas
+from auth import (create_access_token, get_current_user, get_password_hash,
+                  verify_password)
 from database import engine, get_db
 
 app = FastAPI()
@@ -17,9 +20,48 @@ app.mount("/webapp", StaticFiles(directory="webapp"), name="webapp")
 models.Base.metadata.create_all(bind=engine)
 
 
+# Register a new user
+@app.post("/register", response_model=schemas.UserInDB)
+def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    hashed_password = get_password_hash(user.password)
+    db_user = models.User(username=user.username, hashed_password=hashed_password)
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+
+# Login to get token
+@app.post("/token", response_model=schemas.Token)
+def login_for_access_token(
+    db: Session = Depends(get_db), form_data: OAuth2PasswordRequestForm = Depends()
+):
+    user = (
+        db.query(models.User).filter(models.User.username == form_data.username).first()
+    )
+    if not user or not verify_password(form_data.password, user.hashed_password):
+        raise HTTPException(
+            status_code=401,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token = create_access_token(data={"sub": user.username})
+    return {"access_token": access_token, "token_type": "bearer"}
+
+
+# Protected route example
+@app.get("/users/me")
+def read_users_me(current_user: models.User = Depends(get_current_user)):
+    return current_user
+
+
 # Add a new todo
 @app.post("/todos/", response_model=schemas.TodoResponse)
-def create_todo(todo: schemas.TodoCreate, db: Session = Depends(get_db)):
+def create_todo(
+    todo: schemas.TodoCreate,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
     db_todo = models.Todo(
         name=todo.name,
         description=todo.description,
@@ -36,6 +78,7 @@ def create_todo(todo: schemas.TodoCreate, db: Session = Depends(get_db)):
 def update_todo(
     todo_id: int,
     update_request: schemas.UpdateTodoRequest,
+    current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     todo = db.query(models.Todo).filter(models.Todo.id == todo_id).first()
@@ -62,7 +105,10 @@ def update_todo(
 # Mark a todo as done (update next_due_date by adding frequency) and log it
 @app.put("/todos/{todo_id}/done", response_model=schemas.TodoResponse)
 def mark_todo_done(
-    todo_id: int, todo_data: schemas.TodoMarkDone, db: Session = Depends(get_db)
+    todo_id: int,
+    todo_data: schemas.TodoMarkDone,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     db_todo = db.query(models.Todo).filter(models.Todo.id == todo_id).first()
     if not db_todo:
@@ -82,7 +128,11 @@ def mark_todo_done(
 
 
 @app.put("/todos/{todo_id}/due", response_model=schemas.TodoResponse)
-def mark_todo_due(todo_id: int, db: Session = Depends(get_db)):
+def mark_todo_due(
+    todo_id: int,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
     db_todo = db.query(models.Todo).filter(models.Todo.id == todo_id).first()
     if not db_todo:
         raise HTTPException(status_code=404, detail="Todo not found")
@@ -99,6 +149,7 @@ def mark_todo_due(todo_id: int, db: Session = Depends(get_db)):
 def postpone_todo(
     todo_id: int,
     postpone_request: schemas.PostponeRequest,
+    current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     todo = db.query(models.Todo).filter(models.Todo.id == todo_id).first()
@@ -117,7 +168,10 @@ def postpone_todo(
 
 # List all logs, now including the associated todo's name
 @app.get("/logs/", response_model=list[schemas.LogResponse])
-def get_logs(db: Session = Depends(get_db)):
+def get_logs(
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
     logs = db.query(models.Log).all()
 
     # Construct the response to include todo_name
@@ -142,6 +196,7 @@ def read_todos(
     limit: int = 100,
     archived: bool = False,
     db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
 ):
     todos = (
         db.query(models.Todo)
@@ -171,7 +226,9 @@ def read_todos(
 
 
 @app.get("/stats")
-def get_task_statistics(db: Session = Depends(get_db)):
+def get_task_statistics(
+    current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)
+):
     # Query the log table to count how many tasks each user has completed
     results = (
         db.query(models.Log.username, func.count(models.Log.id).label("task_count"))

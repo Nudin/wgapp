@@ -40,3 +40,16 @@ class Log(Base):
     done_date = Column(Date, default=date.today)
 
     todo = relationship("Todo", back_populates="logs")
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True)
+    hashed_password = Column(String)
+    is_active = Column(Boolean, default=True)
+    is_superuser = Column(Boolean, default=False)
+
+    # Relationship with logs (for task completion tracking)
+    # logs = relationship("Log", back_populates="user")

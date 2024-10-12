@@ -4,10 +4,33 @@ const apiBaseUrl = '';  // Adjust the base URL as necessary
 const todoList = document.getElementById('todoList');
 const logList = document.getElementById('logList');
 const addTodoForm = document.getElementById('addTodoForm');
+const authSection = document.getElementById('auth-section');
+const mainContent = document.getElementById('main-content');
+const errorMessageElement = document.getElementById('error-message');
+
+// Check if the user is logged in (by looking for a token)
+function checkAuth() {
+    const token = localStorage.getItem('token');
+    if (token) {
+        // User is logged in
+        authSection.style.display = 'none';
+        mainContent.style.display = 'block';
+        fetchTodos();
+        fetchLogs();
+    } else {
+        // User is not logged in
+        authSection.style.display = 'block';
+        mainContent.style.display = 'none';
+    }
+}
 
 // Fetch Todos from API and display them
 async function fetchTodos() {
-    const response = await fetch(`${apiBaseUrl}/todos/`);
+    const response = await fetch(`${apiBaseUrl}/todos/`, {
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+    });
     const todos = await response.json();
     const todoList = document.getElementById("todoList");
     todoList.innerHTML = ""; // Clear existing list
@@ -38,7 +61,11 @@ async function fetchTodos() {
 // Fetch Logs from API and display them
 async function fetchLogs() {
     try {
-        const response = await fetch(`${apiBaseUrl}/logs/`);
+        const response = await fetch(`${apiBaseUrl}/logs/`, {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
         const logs = await response.json();
         const logList = document.getElementById('log-list');
 
@@ -64,7 +91,11 @@ async function fetchLogs() {
 // Function to fetch statistics and display them
 async function fetchStatistics() {
     try {
-        const response = await fetch('/stats');
+        const response = await fetch(`${apiBaseUrl}/stats`, {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
         const stats = await response.json();
         const statsSection = document.getElementById('stats-section');
         statsSection.innerHTML = '';  // Clear any previous content
@@ -87,7 +118,10 @@ async function markTodoDone(todoId) {
     if (username) {
         await fetch(`${apiBaseUrl}/todos/${todoId}/done`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
             body: JSON.stringify({ username })
         });
         fetchTodos();
@@ -102,10 +136,11 @@ async function postponeTodo(todoId) {
 
     if (newDueDate) {
         try {
-            const response = await fetch(`/todos/${todoId}/postpone/`, {
+            const response = await fetch(`${apiBaseUrl}/todos/${todoId}/postpone/`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
                 },
                 body: JSON.stringify({ new_due_date: newDueDate }),
             });
@@ -127,7 +162,12 @@ async function postponeTodo(todoId) {
 
 // Mark a Todo as Due Today
 async function markTodoDue(todoId) {
-    await fetch(`${apiBaseUrl}/todos/${todoId}/due`, { method: 'PUT' });
+    await fetch(`${apiBaseUrl}/todos/${todoId}/due`, {
+        method: 'PUT',
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+    });
     fetchTodos();
 }
 
@@ -143,7 +183,10 @@ addTodoForm.addEventListener('submit', async (e) => {
 
     await fetch(`${apiBaseUrl}/todos/`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
         body: JSON.stringify(newTodo)
     });
 
@@ -237,3 +280,75 @@ function editTodoButton(todo) {
     openEditModal(todo.id, todo.name, todo.description, todo.frequency, todo.next_due_date);
 }
 
+// Handle User Registration
+document.getElementById('register-form').addEventListener('submit', async function (event) {
+    event.preventDefault();
+    const username = document.getElementById('register-username').value;
+    const password = document.getElementById('register-password').value;
+
+    try {
+        const response = await fetch(`${apiBaseUrl}/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            showError(`Registration failed: ${errorData.detail || 'Unknown error'}`);
+        } else {
+            const result = await response.json();
+            console.log('User registered:', result);
+            showError(''); // Clear any previous error
+            // Optionally log the user in after registration
+        }
+    } catch (error) {
+        showError('Registration failed: Unable to connect to the server.');
+    }
+});
+
+// Handle User Login
+document.getElementById('login-form').addEventListener('submit', async function (event) {
+    event.preventDefault();
+    const username = document.getElementById('login-username').value;
+    const password = document.getElementById('login-password').value;
+
+    try {
+        const response = await fetch(`${apiBaseUrl}/token`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            showError(`Login failed: ${errorData.detail || 'Incorrect username or password'}`);
+        } else {
+            const result = await response.json();
+            console.log('Logged in:', result);
+
+            // Store the access token in localStorage
+            localStorage.setItem('token', result.access_token);
+
+            showError(''); // Clear any previous error
+            checkAuth();   // Proceed to the main content
+        }
+    } catch (error) {
+        showError('Login failed: Unable to connect to the server.');
+    }
+});
+
+// Function to display error messages
+function showError(message) {
+    if (message) {
+        errorMessageElement.textContent = message;
+        errorMessageElement.style.display = 'block';
+    } else {
+        errorMessageElement.style.display = 'none'; // Hide if no error
+    }
+}
+
+// Function to initialize the page
+window.onload = function () {
+    checkAuth();
+};

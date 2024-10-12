@@ -56,3 +56,22 @@ class UpdateTodoRequest(BaseModel):
     frequency: Optional[int] = None
     next_due_date: Optional[date] = None
     archived: Optional[bool] = False
+
+
+class UserCreate(BaseModel):
+    username: str
+    password: str
+
+
+class UserInDB(BaseModel):
+    username: str
+    hashed_password: str
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class TokenData(BaseModel):
+    username: str | None = None

@@ -5,70 +5,111 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Todo WebApp</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Simple styles to hide/show sections */
+        #auth-section, #main-content {
+            display: none;
+        }
+
+        .visible {
+            display: block;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
         <h1>Todo WebApp</h1>
 
-        <!-- Tab Navigation -->
-        <div class="tab">
-            <button class="tablinks active" onclick="openTab(event, 'Todos')">Todos</button>
-            <button class="tablinks" onclick="openTab(event, 'AddTodo')">Add Todo</button>
-            <button class="tablinks" onclick="openTab(event, 'Logs')">Logs</button>
-        </div>
-
-        <!-- Todos Tab Content -->
-        <div id="Todos" class="tabcontent active">
-            <h2>Todos</h2>
-            <ul id="todoList"></ul>
-        </div>
-
-        <!-- Add Todo Tab Content -->
-        <div id="AddTodo" class="tabcontent">
-            <h2>Add New Todo</h2>
-            <form id="addTodoForm">
-                <input type="text" id="todoName" placeholder="Todo Name" required>
-                <textarea id="todoDescription" placeholder="Todo Description"></textarea>
-                <input type="number" id="todoFrequency" placeholder="Frequency (days)" required>
-                <input type="date" id="todoNextDueDate" required>
-                <button type="submit">Add Todo</button>
+        <!-- Registration/Login Section -->
+        <section id="auth-section">
+            <h2>Register</h2>
+            <form id="register-form">
+                <label for="username">Username</label>
+                <input type="text" id="register-username" name="username" required>
+      
+                <label for="password">Password</label>
+                <input type="password" id="register-password" name="password" required>
+      
+                <button type="submit">Register</button>
             </form>
-        </div>
 
-        <!-- Logs Tab Content -->
-        <div id="Logs" class="tabcontent">
-            <h2>Task Completion Logs</h2>
-            <ul id="log-list"></ul>
+            <h2>Login</h2>
+            <form id="login-form">
+                <label for="username">Username</label>
+                <input type="text" id="login-username" name="username" required>
+      
+                <label for="password">Password</label>
+                <input type="password" id="login-password" name="password" required>
+      
+                <button type="submit">Login</button>
+            </form>
 
-            <h2>User Task Completion Statistics</h2>
-            <ul id="stats-section"></ul>
-        </div>
-    </div>
+            <section id="error-message" style="color: red; display: none;"></section>
+        </section>
+
+        <!-- Main Content Section (visible only if logged in) -->
+        <section id="main-content">
+            <!-- Tab Navigation -->
+            <div class="tab">
+                <button class="tablinks active" onclick="openTab(event, 'Todos')">Todos</button>
+                <button class="tablinks" onclick="openTab(event, 'AddTodo')">Add Todo</button>
+                <button class="tablinks" onclick="openTab(event, 'Logs')">Logs</button>
+            </div>
+
+            <!-- Todos Tab Content -->
+            <div id="Todos" class="tabcontent active">
+                <h2>Todos</h2>
+                <ul id="todoList"></ul>
+            </div>
+
+            <!-- Add Todo Tab Content -->
+            <div id="AddTodo" class="tabcontent">
+                <h2>Add New Todo</h2>
+                <form id="addTodoForm">
+                    <input type="text" id="todoName" placeholder="Todo Name" required>
+                    <textarea id="todoDescription" placeholder="Todo Description"></textarea>
+                    <input type="number" id="todoFrequency" placeholder="Frequency (days)" required>
+                    <input type="date" id="todoNextDueDate" required>
+                    <button type="submit">Add Todo</button>
+                </form>
+            </div>
+
+            <!-- Logs Tab Content -->
+            <div id="Logs" class="tabcontent">
+                <h2>Task Completion Logs</h2>
+                <ul id="log-list"></ul>
+
+                <h2>User Task Completion Statistics</h2>
+                <ul id="stats-section"></ul>
+            </div>
+        </section>
+
         <!-- Modal for Editing Todo -->
-    <div id="editModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal()">&times;</span>
-            <h2>Edit Todo</h2>
-            <form id="editTodoForm">
-                <label for="editName">Name</label>
-                <input type="text" id="editName" name="name" placeholder="Enter new name">
-                
-                <label for="editDescription">Description</label>
-                <input type="text" id="editDescription" name="description" placeholder="Enter new description">
-                
-                <label for="editFrequency">Frequency (days)</label>
-                <input type="number" id="editFrequency" name="frequency" placeholder="Enter new frequency in days">
-                
-                <label for="editDueDate">Next Due Date</label>
-                <input type="date" id="editDueDate" name="next_due_date">
-                
-                <span>
-                <input type="checkbox" id="editArchived" name="editArchived">
-                <label for="editArchived">Archived</label>
-                </span>
+        <div id="editModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal()">&times;</span>
+                <h2>Edit Todo</h2>
+                <form id="editTodoForm">
+                    <label for="editName">Name</label>
+                    <input type="text" id="editName" name="name" placeholder="Enter new name">
+                    
+                    <label for="editDescription">Description</label>
+                    <input type="text" id="editDescription" name="description" placeholder="Enter new description">
+                    
+                    <label for="editFrequency">Frequency (days)</label>
+                    <input type="number" id="editFrequency" name="frequency" placeholder="Enter new frequency in days">
+                    
+                    <label for="editDueDate">Next Due Date</label>
+                    <input type="date" id="editDueDate" name="next_due_date">
+                    
+                    <span>
+                    <input type="checkbox" id="editArchived" name="editArchived">
+                    <label for="editArchived">Archived</label>
+                    </span>
 
-                <button type="button" onclick="submitEditTodo()">Save Changes</button>
-            </form>
+                    <button type="button" onclick="submitEditTodo()">Save Changes</button>
+                </form>
+            </div>
         </div>
     </div>
 
