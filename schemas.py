@@ -23,7 +23,7 @@ class TodoResponse(BaseModel):
     description: str | None = None
     frequency: int
     next_due_date: date
-    due: bool
+    due: Optional[bool] = None
 
     class Config:
         from_attributes = True
