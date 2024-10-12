@@ -106,7 +106,6 @@ def update_todo(
 @app.put("/todos/{todo_id}/done", response_model=schemas.TodoResponse)
 def mark_todo_done(
     todo_id: int,
-    todo_data: schemas.TodoMarkDone,
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -118,7 +117,7 @@ def mark_todo_done(
 
     # Log the action
     log_entry = models.Log(
-        todo_id=todo_id, username=todo_data.username, done_date=date.today()
+        todo_id=todo_id, username=current_user.username, done_date=date.today()
     )
     db.add(log_entry)
 

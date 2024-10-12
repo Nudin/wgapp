@@ -31,7 +31,7 @@ class TodoResponse(BaseModel):
 
 # New schema for marking todo as done with username
 class TodoMarkDone(BaseModel):
-    username: str
+    pass
 
 
 # Modify LogResponse to include the Todo name

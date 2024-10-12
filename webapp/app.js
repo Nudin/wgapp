@@ -114,19 +114,15 @@ async function fetchStatistics() {
 
 // Mark a Todo as Done
 async function markTodoDone(todoId) {
-    const username = prompt("Enter your username to mark this task as done:");
-    if (username) {
-        await fetch(`${apiBaseUrl}/todos/${todoId}/done`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-            },
-            body: JSON.stringify({ username })
-        });
-        fetchTodos();
-        fetchLogs();
-    }
+    await fetch(`${apiBaseUrl}/todos/${todoId}/done`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+    });
+    fetchTodos();
+    fetchLogs();
 }
 
 // Postpone a Todo
