@@ -166,29 +166,6 @@ def postpone_todo(
     }
 
 
-# List all logs, now including the associated todo's name
-@app.get("/logs/", response_model=list[schemas.LogResponse], tags=["logs"])
-def get_logs(
-    current_user: models.User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    logs = db.query(models.Log).all()
-
-    # Construct the response to include todo_name
-    response = []
-    for log in logs:
-        log_response = schemas.LogResponse(
-            id=log.id,
-            todo_id=log.todo_id,
-            username=log.username,
-            done_date=log.done_date,
-            todo_name=log.todo.name,  # Access the name of the associated todo
-        )
-        response.append(log_response)
-
-    return response
-
-
 # List all todos
 @app.get("/todos/", response_model=list[schemas.TodoResponse], tags=["todos"])
 def read_todos(
@@ -225,6 +202,79 @@ def read_todos(
     return result
 
 
+# List all logs, now including the associated todo's name
+@app.get("/logs/", response_model=list[schemas.LogResponse], tags=["logs"])
+def get_logs(
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    logs = db.query(models.Log).all()
+
+    # Construct the response to include todo_name
+    response = []
+    for log in logs:
+        log_response = schemas.LogResponse(
+            id=log.id,
+            todo_id=log.todo_id,
+            username=log.username,
+            done_date=log.done_date,
+            todo_name=log.todo.name,  # Access the name of the associated todo
+        )
+        response.append(log_response)
+
+    return response
+
+
+# List all logs, now including the associated todo's name
+@app.get("/logs/{todo_id}", response_model=list[schemas.LogResponse], tags=["logs"])
+def get_logs_for_task(
+    todo_id: int,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    logs = db.query(models.Log).filter_by(todo_id=todo_id).all()
+
+    # Construct the response to include todo_name
+    response = []
+    for log in logs:
+        log_response = schemas.LogResponse(
+            id=log.id,
+            todo_id=log.todo_id,
+            username=log.username,
+            done_date=log.done_date,
+            todo_name=log.todo.name,  # Access the name of the associated todo
+        )
+        response.append(log_response)
+
+    return response
+
+
+# List all logs, now including the associated todo's name
+@app.get(
+    "/logs/by-user/{username}", response_model=list[schemas.LogResponse], tags=["logs"]
+)
+def get_logs_by_user(
+    username: str,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    logs = db.query(models.Log).filter_by(username=username).all()
+
+    # Construct the response to include todo_name
+    response = []
+    for log in logs:
+        log_response = schemas.LogResponse(
+            id=log.id,
+            todo_id=log.todo_id,
+            username=log.username,
+            done_date=log.done_date,
+            todo_name=log.todo.name,  # Access the name of the associated todo
+        )
+        response.append(log_response)
+
+    return response
+
+
 @app.get("/stats", tags=["logs"])
 def get_task_statistics(
     current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)
@@ -232,6 +282,32 @@ def get_task_statistics(
     # Query the log table to count how many tasks each user has completed
     results = (
         db.query(models.Log.username, func.count(models.Log.id).label("task_count"))
+        .group_by(models.Log.username)
+        .all()
+    )
+
+    # Create a response with each user and their task completion count
+    stats = {
+        "user_stats": [
+            {"username": result.username, "task_count": result.task_count}
+            for result in results
+        ]
+    }
+
+    return stats
+
+
+@app.get("/stats/{todo_id}", tags=["logs"])
+def get_task_statistics_for_task(
+    todo_id: int,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    # Query the log table to count how many tasks each user has completed
+    # TODO: FIXME
+    results = (
+        db.query(models.Log.username, func.count(models.Log.id).label("task_count"))
+        .where(models.Log.todo_id == todo_id)
         .group_by(models.Log.username)
         .all()
     )
