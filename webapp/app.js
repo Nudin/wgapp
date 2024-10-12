@@ -66,6 +66,12 @@ async function fetchLogs() {
                 'Authorization': `Bearer ${localStorage.getItem('token')}`
             }
         });
+        if (response.status === 401) {
+            console.log("Token invalid")
+            localStorage.removeItem('token');
+            checkAuth();
+            return;
+        }
         const logs = await response.json();
         const logList = document.getElementById('log-list');
 
