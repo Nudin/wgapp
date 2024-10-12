@@ -21,7 +21,7 @@ models.Base.metadata.create_all(bind=engine)
 
 
 # Register a new user
-@app.post("/register", response_model=schemas.UserInDB)
+@app.post("/register", response_model=schemas.UserInDB, tags=["accounts"])
 def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
     hashed_password = get_password_hash(user.password)
     db_user = models.User(username=user.username, hashed_password=hashed_password)
@@ -32,7 +32,7 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
 
 
 # Login to get token
-@app.post("/token", response_model=schemas.Token)
+@app.post("/token", response_model=schemas.Token, tags=["accounts"])
 def login_for_access_token(
     db: Session = Depends(get_db), form_data: OAuth2PasswordRequestForm = Depends()
 ):
@@ -50,13 +50,13 @@ def login_for_access_token(
 
 
 # Protected route example
-@app.get("/users/me")
+@app.get("/users/me", tags=["accounts"])
 def read_users_me(current_user: models.User = Depends(get_current_user)):
     return current_user
 
 
 # Add a new todo
-@app.post("/todos/", response_model=schemas.TodoResponse)
+@app.post("/todos/", response_model=schemas.TodoResponse, tags=["todos"])
 def create_todo(
     todo: schemas.TodoCreate,
     current_user: models.User = Depends(get_current_user),
@@ -74,7 +74,7 @@ def create_todo(
     return db_todo
 
 
-@app.put("/todos/{todo_id}/")
+@app.put("/todos/{todo_id}/", tags=["todos"])
 def update_todo(
     todo_id: int,
     update_request: schemas.UpdateTodoRequest,
@@ -103,7 +103,7 @@ def update_todo(
 
 
 # Mark a todo as done (update next_due_date by adding frequency) and log it
-@app.put("/todos/{todo_id}/done", response_model=schemas.TodoResponse)
+@app.put("/todos/{todo_id}/done", response_model=schemas.TodoResponse, tags=["todos"])
 def mark_todo_done(
     todo_id: int,
     todo_data: schemas.TodoMarkDone,
@@ -127,7 +127,7 @@ def mark_todo_done(
     return db_todo
 
 
-@app.put("/todos/{todo_id}/due", response_model=schemas.TodoResponse)
+@app.put("/todos/{todo_id}/due", response_model=schemas.TodoResponse, tags=["todos"])
 def mark_todo_due(
     todo_id: int,
     current_user: models.User = Depends(get_current_user),
@@ -145,7 +145,7 @@ def mark_todo_due(
 
 
 # Postpone a todo by adding the frequency to the current next_due_date
-@app.post("/todos/{todo_id}/postpone/")
+@app.post("/todos/{todo_id}/postpone/", tags=["todos"])
 def postpone_todo(
     todo_id: int,
     postpone_request: schemas.PostponeRequest,
@@ -167,7 +167,7 @@ def postpone_todo(
 
 
 # List all logs, now including the associated todo's name
-@app.get("/logs/", response_model=list[schemas.LogResponse])
+@app.get("/logs/", response_model=list[schemas.LogResponse], tags=["logs"])
 def get_logs(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -190,7 +190,7 @@ def get_logs(
 
 
 # List all todos
-@app.get("/todos/", response_model=list[schemas.TodoResponse])
+@app.get("/todos/", response_model=list[schemas.TodoResponse], tags=["todos"])
 def read_todos(
     skip: int = 0,
     limit: int = 100,
@@ -225,7 +225,7 @@ def read_todos(
     return result
 
 
-@app.get("/stats")
+@app.get("/stats", tags=["logs"])
 def get_task_statistics(
     current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
