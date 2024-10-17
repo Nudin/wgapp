@@ -24,16 +24,58 @@ function checkAuth() {
     }
 }
 
-// Fetch Todos from API and display them
-async function fetchTodos() {
-    const response = await fetch(`${apiBaseUrl}/todos/`, {
+async function get(url) {
+    const response = await fetch(`${apiBaseUrl}/${url}`, {
         headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
     });
-    const todos = await response.json();
+    if (response.status === 401) {
+        console.log("Token invalid")
+        localStorage.removeItem('token');
+        checkAuth();
+        return {};
+    }
+    return response.json();
+}
+async function put(url, data) {
+    const response = await fetch(`${apiBaseUrl}/${url}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+        throw new Error("Network response was not ok");
+    }
+
+    return await response.json();
+}
+async function post(url, data) {
+    const response = await fetch(`${apiBaseUrl}/${url}`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+        let err = new Error("Network response was not ok");
+        err._data = response.json();
+        throw err;
+    }
+
+    return await response.json();
+}
+
+// Fetch Todos from API and display them
+async function fetchTodos() {
+    const todos = await get('todos/')
     const todoList = document.getElementById("todoList");
-    todoList.innerHTML = ""; // Clear existing list
+    todoList.innerHTML = "";
 
     todos.forEach(todo => {
         const todoItem = document.createElement('li');
@@ -61,18 +103,7 @@ async function fetchTodos() {
 // Fetch Logs from API and display them
 async function fetchLogs() {
     try {
-        const response = await fetch(`${apiBaseUrl}/logs/`, {
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
-        });
-        if (response.status === 401) {
-            console.log("Token invalid")
-            localStorage.removeItem('token');
-            checkAuth();
-            return;
-        }
-        const logs = await response.json();
+        const logs = await get('logs/');
         const logList = document.getElementById('log-list');
 
         logList.innerHTML = '';
@@ -97,12 +128,7 @@ async function fetchLogs() {
 // Function to fetch statistics and display them
 async function fetchStatistics() {
     try {
-        const response = await fetch(`${apiBaseUrl}/stats`, {
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
-        });
-        const stats = await response.json();
+        const stats = await get('stats');
         const statsSection = document.getElementById('stats-section');
         statsSection.innerHTML = '';  // Clear any previous content
 
@@ -120,14 +146,7 @@ async function fetchStatistics() {
 
 // Mark a Todo as Done
 async function markTodoDone(todoId) {
-    await fetch(`${apiBaseUrl}/todos/${todoId}/done`, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({}),
-    });
+    await put(`todos/${todoId}/done`, {});
     fetchTodos();
     fetchLogs();
 }
@@ -139,21 +158,7 @@ async function postponeTodo(todoId) {
 
     if (newDueDate) {
         try {
-            const response = await fetch(`${apiBaseUrl}/todos/${todoId}/postpone/`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify({ new_due_date: newDueDate }),
-            });
-
-            if (!response.ok) {
-                throw new Error("Network response was not ok");
-            }
-
-            const result = await response.json();
-            alert(result.message);
+            await post(`todos/${todoId}/postpone/`, { new_due_date: newDueDate });
             fetchTodos(); // Refresh the todo list after postponing
         } catch (error) {
             console.error("Error postponing todo:", error);
@@ -165,12 +170,7 @@ async function postponeTodo(todoId) {
 
 // Mark a Todo as Due Today
 async function markTodoDue(todoId) {
-    await fetch(`${apiBaseUrl}/todos/${todoId}/due`, {
-        method: 'PUT',
-        headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-    });
+    await put(`todos/${todoId}/due`, null);
     fetchTodos();
 }
 
@@ -184,14 +184,7 @@ addTodoForm.addEventListener('submit', async (e) => {
         next_due_date: document.getElementById('todoNextDueDate').value
     };
 
-    await fetch(`${apiBaseUrl}/todos/`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(newTodo)
-    });
+    await post(`todos/`, newTodo);
 
     // Clear form and refresh todos
     addTodoForm.reset();
@@ -256,20 +249,7 @@ async function submitEditTodo() {
     updates.archived = archived;
 
     try {
-        const response = await fetch(`/todos/${currentTodoId}/`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(updates),
-        });
-
-        if (!response.ok) {
-            throw new Error("Network response was not ok");
-        }
-
-        const result = await response.json();
-        alert(result.message);
+        await put(`todos/${currentTodoId}/`, updates);
         closeModal(); // Close the modal after successful submission
         fetchTodos(); // Refresh the todo list after updating
     } catch (error) {
@@ -290,23 +270,13 @@ document.getElementById('register-form').addEventListener('submit', async functi
     const password = document.getElementById('register-password').value;
 
     try {
-        const response = await fetch(`${apiBaseUrl}/register`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            showError(`Registration failed: ${errorData.detail || 'Unknown error'}`);
-        } else {
-            const result = await response.json();
-            console.log('User registered:', result);
-            showError(''); // Clear any previous error
-            // Optionally log the user in after registration
-        }
+        const result = await post(`register`, { username, password });
+        console.log('User registered:', result);
+        showError(''); // Clear any previous error
+        // TODO: Log the user in or show success
     } catch (error) {
-        showError('Registration failed: Unable to connect to the server.');
+        const reason = error._data || "Unknown error";
+        showError(`Registration failed: ${error._data}`);
     }
 });
 
