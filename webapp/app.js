@@ -81,9 +81,10 @@ async function fetchTodos() {
         const todoItem = document.createElement('li');
         const dueDate = new Date(todo.next_due_date).toLocaleDateString();
         const dueClass = todo.due ? 'overdue' : '';
+        todoItem._data = todo;
         todoItem.innerHTML = `
             <div>
-                <strong>${todo.name}</strong><br>
+                <strong onclick="showDetails(event)">${todo.name}</strong><br>
             ${todo.description} <em>(every ${todo.frequency} days)</em>
             </div>
             <div class="duedate ${dueClass}">
@@ -93,7 +94,7 @@ async function fetchTodos() {
                 <button onclick="markTodoDone(${todo.id})">✅ Done</button>
                 ${!todo.due ? `<button onclick="markTodoDue(${todo.id})">🔥 Due now!</button>` : ''}
                 ${todo.due ? `<button onclick="postponeTodo(${todo.id})">❎ Postpone</button>` : ''}
-                <button onclick='editTodoButton(${JSON.stringify(todo)})'>⚙️ Edit</button>
+                <button onclick='editTodoButton(event)'>⚙️ Edit</button>
             </div>
         `;
         todoList.appendChild(todoItem);
@@ -213,23 +214,57 @@ function openTab(evt, tabName) {
 
 let currentTodoId = null; // Variable to hold the current todo ID being edited
 
+
+// Function to open/close a modal
+function openModal(modalName) {
+    document.getElementById(modalName).style.display = 'block';
+}
+function closeModal(modalName) {
+    document.getElementById(modalName).style.display = 'none';
+}
+
+async function showDetails(event) {
+    todo = event.target.parentElement.parentElement._data
+    const logs = await get("logs/" + todo.id)
+    const stats = await get("stats/" + todo.id)
+    const content = document.querySelector('#detailsModal .content');
+    content.innerHTML = '';
+
+    // Create containers for stats and logs
+    const statsContainer = document.createElement('div');
+    const logsContainer = document.createElement('div');
+
+    // Append the containers to logList
+    content.appendChild(statsContainer);
+    content.appendChild(logsContainer);
+
+    stats["user_stats"].forEach(stat => {
+        const statItem = document.createElement('li');
+        statItem.innerHTML = `<strong>${stat.username}</strong>: ${stat.task_count} tasks completed`;
+        statsContainer.appendChild(statItem);
+    });
+    logs.forEach(log => {
+        const logItem = document.createElement('li');
+        const completionDate = new Date(log.done_date).toLocaleDateString();
+
+        logItem.innerHTML = `${log.done_date}:&nbsp;<strong>${log.username}</strong>`;
+
+        logsContainer.appendChild(logItem);
+    });
+
+    // After fetching logs, fetch the statistics
+    await fetchStatistics();
+    openModal('detailsModal');
+}
+
 // Function to open the modal with the current todo's data
 function openEditModal(todoId, name, description, frequency, nextDueDate) {
     currentTodoId = todoId; // Set the current todo ID
-    
-    // Populate the form with the current todo values
     document.getElementById('editName').value = name;
     document.getElementById('editDescription').value = description;
     document.getElementById('editFrequency').value = frequency;
     document.getElementById('editDueDate').value = nextDueDate;
-
-    // Display the modal
-    document.getElementById('editModal').style.display = 'block';
-}
-
-// Function to close the modal
-function closeModal() {
-    document.getElementById('editModal').style.display = 'none';
+    openModal('editModal')
 }
 
 // Function to submit the edited todo
@@ -250,7 +285,7 @@ async function submitEditTodo() {
 
     try {
         await put(`todos/${currentTodoId}/`, updates);
-        closeModal(); // Close the modal after successful submission
+        closeModal('editModal');
         fetchTodos(); // Refresh the todo list after updating
     } catch (error) {
         console.error("Error updating todo:", error);
@@ -259,7 +294,8 @@ async function submitEditTodo() {
 }
 
 // Function to open the edit modal when the "Edit" button is clicked
-function editTodoButton(todo) {
+function editTodoButton(event) {
+    todo = event.target.parentElement.parentElement._data
     openEditModal(todo.id, todo.name, todo.description, todo.frequency, todo.next_due_date);
 }
 

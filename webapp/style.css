@@ -203,3 +203,13 @@ form button:hover {
 #log-list li {
     margin: 10px 0;
 }
+
+.modal .content {
+	overflow: auto;
+	max-height: 30em;
+	display: flex;
+	justify-content: space-evenly;
+}
+.modal .content li {
+  padding: 1em 2em;
+}
