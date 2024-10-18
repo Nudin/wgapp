@@ -191,6 +191,8 @@ form button:hover {
     padding: 10px;
     background-color: #f4f4f4;
     border-radius: 8px;
+    overflow-y: auto;
+    max-height: 40vh;
 }
 
 #stats-section li {
