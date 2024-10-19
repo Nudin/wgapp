@@ -103,6 +103,7 @@ async function fetchTodos() {
                     <button onclick='editTodoButton(event)'>✏️ Edit Task</button>
                     <button onclick='showDetails(event)'>🧾 Show logs</button>
                     <button onclick="markTodoDoneByGuest(${todo.id})">✅ Done by guest</button>
+                    <button onclick='markTodoArchived(${todo.id})'>🗑 Archive</button>
                   </div>
                 </div>
             </div>
@@ -182,6 +183,10 @@ async function postponeTodo(todoId) {
     }
 }
 
+async function markTodoArchived(todoId) {
+    await put(`todos/${todoId}/`, {"archived": true});
+    fetchAll();
+}
 
 // Mark a Todo as Due Today
 async function markTodoDue(todoId) {
