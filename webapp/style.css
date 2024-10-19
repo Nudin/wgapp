@@ -193,6 +193,8 @@ form button:hover {
     border-radius: 8px;
     overflow-y: auto;
     max-height: 40vh;
+    flex-direction: column-reverse;
+    display: flex;
 }
 
 #stats-section li {
@@ -201,7 +203,7 @@ form button:hover {
 }
 
 #log-list li {
-    margin: 10px 0;
+    margin: 5px 0;
 }
 
 .modal .content {
@@ -212,4 +214,36 @@ form button:hover {
 }
 .modal .content li {
   padding: 1em 2em;
+}
+
+/* Further options dropdown */
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  background-color: #f9f9f9;
+  min-width: 10em;
+  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+  z-index: 1;
+}
+
+.dropdown-menu button {
+  color: black;
+  padding: 8px 16px;
+  text-decoration: none;
+  display: block;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+}
+
+@media (min-width: 768px) {
+  .dropdown:hover .dropdown-menu {
+    display: block;
+  }
 }

@@ -84,7 +84,7 @@ async function fetchTodos() {
         todoItem._data = todo;
         todoItem.innerHTML = `
             <div>
-                <strong onclick="showDetails(event)">${todo.name}</strong><br>
+                <strong>${todo.name}</strong><br>
             ${todo.description} <em>(every ${todo.frequency} days)</em>
             </div>
             <div class="duedate ${dueClass}">
@@ -94,7 +94,17 @@ async function fetchTodos() {
                 <button onclick="markTodoDone(${todo.id})">✅ Done</button>
                 ${!todo.due ? `<button onclick="markTodoDue(${todo.id})">🔥 Due now!</button>` : ''}
                 ${todo.due ? `<button onclick="postponeTodo(${todo.id})">❎ Postpone</button>` : ''}
-                <button onclick='editTodoButton(event)'>⚙️ Edit</button>
+                <!-- Dropdown container -->
+                <div class="dropdown">
+                  <button class="dropdown-toggle" onclick="toggleDropdown(this)">…</button>
+
+                  <!-- Dropdown menu -->
+                  <div class="dropdown-menu">
+                    <button onclick='editTodoButton(event)'>✏️ Edit Task</button>
+                    <button onclick='showDetails(event)'>🧾 Show logs</button>
+                    <button onclick="markTodoDoneByGuest(${todo.id})">✅ Done by guest</button>
+                  </div>
+                </div>
             </div>
         `;
         todoList.appendChild(todoItem);
@@ -118,9 +128,6 @@ async function fetchLogs() {
 
             logList.appendChild(logItem);
         });
-
-        // After fetching logs, fetch the statistics
-        await fetchStatistics();
     } catch (error) {
         console.error('Error fetching logs:', error);
     }
@@ -133,7 +140,6 @@ async function fetchStatistics() {
         const statsSection = document.getElementById('stats-section');
         statsSection.innerHTML = '';  // Clear any previous content
 
-        console.log(stats)
         stats["user_stats"].forEach(stat => {
             const statItem = document.createElement('li');
             statItem.innerHTML = `<strong>${stat.username}</strong>: ${stat.task_count} tasks completed`;
@@ -144,12 +150,21 @@ async function fetchStatistics() {
     }
 }
 
+function fetchAll() {
+    fetchTodos();
+    fetchLogs();
+    fetchStatistics();
+}
 
 // Mark a Todo as Done
 async function markTodoDone(todoId) {
     await put(`todos/${todoId}/done`, {});
-    fetchTodos();
-    fetchLogs();
+    fetchAll();
+}
+async function markTodoDoneByGuest(todoId) {
+    const username = prompt("Please enter username")
+    await put(`todos/${todoId}/done`, {"username": username});
+    fetchAll();
 }
 
 // Postpone a Todo
@@ -162,8 +177,7 @@ async function postponeTodo(todoId) {
             await post(`todos/${todoId}/postpone/`, { new_due_date: newDueDate });
             fetchTodos(); // Refresh the todo list after postponing
         } catch (error) {
-            console.error("Error postponing todo:", error);
-            alert("Failed to postpone todo. Please try again.");
+            alert("Failed to postpone todo. Please try again." + error);
         }
     }
 }
@@ -193,8 +207,7 @@ addTodoForm.addEventListener('submit', async (e) => {
 });
 
 // Initial Fetch of Todos and Logs
-fetchTodos();
-fetchLogs();
+fetchAll();
 
 // Tab Management
 function openTab(evt, tabName) {
@@ -224,7 +237,7 @@ function closeModal(modalName) {
 }
 
 async function showDetails(event) {
-    todo = event.target.parentElement.parentElement._data
+    todo = event.target.closest("li")._data
     const logs = await get("logs/" + todo.id)
     const stats = await get("stats/" + todo.id)
     const content = document.querySelector('#detailsModal .content');
@@ -252,8 +265,6 @@ async function showDetails(event) {
         logsContainer.appendChild(logItem);
     });
 
-    // After fetching logs, fetch the statistics
-    await fetchStatistics();
     openModal('detailsModal');
 }
 
@@ -288,14 +299,13 @@ async function submitEditTodo() {
         closeModal('editModal');
         fetchTodos(); // Refresh the todo list after updating
     } catch (error) {
-        console.error("Error updating todo:", error);
-        alert("Failed to update todo. Please try again.");
+        alert("Failed to update todo. Please try again. " + error);
     }
 }
 
 // Function to open the edit modal when the "Edit" button is clicked
 function editTodoButton(event) {
-    todo = event.target.parentElement.parentElement._data
+    todo = event.target.closest("li")._data
     openEditModal(todo.id, todo.name, todo.description, todo.frequency, todo.next_due_date);
 }
 
@@ -356,6 +366,33 @@ function showError(message) {
         errorMessageElement.style.display = 'none'; // Hide if no error
     }
 }
+
+function toggleDropdown(element) {
+  const dropdownMenu = element.nextElementSibling;
+  dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
+}
+
+// Close the dropdown when clicking outside of it
+window.addEventListener('click', function(event) {
+  if (!event.target.matches('.dropdown-toggle')) {
+    const dropdowns = document.getElementsByClassName('dropdown-menu');
+    for (let i = 0; i < dropdowns.length; i++) {
+      const openDropdown = dropdowns[i];
+      if (openDropdown.style.display === 'block') {
+        openDropdown.style.display = 'none';
+      }
+    }
+  }
+});
+
+// Close Popup if escape key is pressed
+document.addEventListener('keydown', function(event) {
+  if (event.key === 'Escape' || event.keyCode === 27) {
+    // Todo: generalize
+    closeModal('editModal')
+    closeModal('detailsModal')
+  }
+});
 
 // Function to initialize the page
 window.onload = function () {
