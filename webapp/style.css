@@ -138,6 +138,7 @@ li button {
     padding: 20px;
     border: 1px solid #888;
     width: 50%; /* Half of the screen width */
+    min-width: 35em;
     border-radius: 10px;
 }
 
@@ -213,7 +214,7 @@ form button:hover {
 	justify-content: space-evenly;
 }
 .modal .content li {
-  padding: 1em 2em;
+  padding: 1em 3vw;
 }
 
 /* Further options dropdown */
