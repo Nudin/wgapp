@@ -19,8 +19,12 @@ class Todo(Base):
     logs = relationship("Log", back_populates="todo")
 
     def mark_done(self):
-        # Update next_due_date by adding the frequency (in days)
-        self.next_due_date = date.today() + timedelta(days=self.frequency)
+        # negative frequency means this is an onetime-task -> archive it
+        if self.frequency < 0:
+            self.archived = True
+        else:
+            # Update next_due_date by adding the frequency (in days)
+            self.next_due_date = date.today() + timedelta(days=self.frequency)
 
     def mark_due(self):
         # Set next_due_date to today's date

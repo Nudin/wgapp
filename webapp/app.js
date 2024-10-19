@@ -82,10 +82,11 @@ async function fetchTodos() {
         const dueDate = new Date(todo.next_due_date).toLocaleDateString();
         const dueClass = todo.due ? 'overdue' : '';
         todoItem._data = todo;
+        const repeat = (todo.frequency >= 0) ? `<em>(every ${todo.frequency} days)</em>` : ''
         todoItem.innerHTML = `
             <div>
                 <strong>${todo.name}</strong><br>
-            ${todo.description} <em>(every ${todo.frequency} days)</em>
+            ${todo.description} ${repeat}
             </div>
             <div class="duedate ${dueClass}">
                 ${new Date(todo.next_due_date).toLocaleDateString()}
@@ -203,6 +204,9 @@ addTodoForm.addEventListener('submit', async (e) => {
         frequency: document.getElementById('todoFrequency').value,
         next_due_date: document.getElementById('todoNextDueDate').value
     };
+    if( document.getElementById('todoOnetime').checked == true) {
+        newTodo.frequency = -1;
+    }
 
     await post(`todos/`, newTodo);
 
@@ -210,6 +214,10 @@ addTodoForm.addEventListener('submit', async (e) => {
     addTodoForm.reset();
     fetchTodos();
 });
+document.getElementById('todoOnetime').addEventListener('change', e => {
+    document.getElementById('todoFrequency').disabled = e.target.checked;
+    document.getElementById('todoFrequency').style.display = e.target.checked ? "none" : "block";
+})
 
 // Initial Fetch of Todos and Logs
 fetchAll();

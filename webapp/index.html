@@ -68,6 +68,10 @@
                 <form id="addTodoForm">
                     <input type="text" id="todoName" placeholder="Todo Name" required>
                     <textarea id="todoDescription" placeholder="Todo Description"></textarea>
+                    <span>
+                    <input type="checkbox" id="todoOnetime" name="todoOnetime">
+                    <label for="todoOnetime">Onetime-Task</label>
+                    </span>
                     <input type="number" id="todoFrequency" placeholder="Frequency (days)" required>
                     <input type="date" id="todoNextDueDate" required>
                     <button type="submit">Add Todo</button>
