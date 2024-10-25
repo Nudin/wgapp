@@ -1,4 +1,4 @@
-const apiBaseUrl = '';  // Adjust the base URL as necessary
+const apiBaseUrl = '/api';  // Adjust the base URL as necessary
 
 // DOM Elements
 const todoList = document.getElementById('todoList');
