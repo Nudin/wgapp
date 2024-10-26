@@ -15,8 +15,7 @@ function checkAuth() {
         // User is logged in
         authSection.style.display = 'none';
         mainContent.style.display = 'block';
-        fetchTodos();
-        fetchLogs();
+        fetchAll();
     } else {
         // User is not logged in
         authSection.style.display = 'block';
@@ -218,9 +217,6 @@ document.getElementById('todoOnetime').addEventListener('change', e => {
     document.getElementById('todoFrequency').disabled = e.target.checked;
     document.getElementById('todoFrequency').style.display = e.target.checked ? "none" : "block";
 })
-
-// Initial Fetch of Todos and Logs
-fetchAll();
 
 // Tab Management
 function openTab(evt, tabName) {
