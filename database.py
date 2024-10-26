@@ -1,11 +1,12 @@
+import tomllib
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-# Replace with your actual database URL (e.g., PostgreSQL or SQLite)
-# DATABASE_URL = "postgresql://user:password@localhost/dbname"
-DATABASE_URL = "sqlite:///./sql_app.db"
+with open("config.toml", "rb") as f:
+    config = tomllib.load(f)
 
-engine = create_engine(DATABASE_URL)
+engine = create_engine(config.get("database_url", "sqlite:///./sql_app.db"))
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

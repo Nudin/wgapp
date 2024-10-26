@@ -1,3 +1,4 @@
+import tomllib
 from datetime import datetime, timedelta
 
 from fastapi import Depends, HTTPException, status
@@ -10,10 +11,12 @@ from database import get_db
 from models import User
 from schemas import TokenData
 
+with open("config.toml", "rb") as f:
+    config = tomllib.load(f)
+
 # JWT Configuration
-SECRET_KEY = "your_secret_key"  # Change this to a strong key
+SECRET_KEY = config["secret_key"]
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/token")
