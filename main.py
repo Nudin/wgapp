@@ -331,4 +331,12 @@ def get_task_statistics_for_task(
     return stats
 
 
+@router.get("/info", tags=["info"])
+def get_info():
+    return {
+        "registation_open": config.get("registation_open", True),
+        "name": config.get("name", ""),
+    }
+
+
 app.include_router(router)
