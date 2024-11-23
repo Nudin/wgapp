@@ -1,3 +1,4 @@
+import tomllib
 from datetime import date, timedelta
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException
@@ -12,6 +13,9 @@ from auth import (create_access_token, get_current_user, get_password_hash,
                   verify_password)
 from database import engine, get_db
 
+with open("config.toml", "rb") as f:
+    config = tomllib.load(f)
+
 app = FastAPI()
 router = APIRouter(prefix="/api")
 
@@ -24,6 +28,8 @@ models.Base.metadata.create_all(bind=engine)
 # Register a new user
 @router.post("/register", response_model=schemas.UserInDB, tags=["accounts"])
 def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    if not config.get("registation_open", True):
+        raise HTTPException(status_code=403, detail="Registration closed.")
     hashed_password = get_password_hash(user.password)
     db_user = models.User(username=user.username, hashed_password=hashed_password)
     db.add(db_user)
@@ -307,7 +313,6 @@ def get_task_statistics_for_task(
     db: Session = Depends(get_db),
 ):
     # Query the log table to count how many tasks each user has completed
-    # TODO: FIXME
     results = (
         db.query(models.Log.username, func.count(models.Log.id).label("task_count"))
         .where(models.Log.todo_id == todo_id)
