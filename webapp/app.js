@@ -8,21 +8,7 @@ const authSection = document.getElementById('auth-section');
 const mainContent = document.getElementById('main-content');
 const errorMessageElement = document.getElementById('error-message');
 
-// Check if the user is logged in (by looking for a token)
-function checkAuth() {
-    const token = localStorage.getItem('token');
-    if (token) {
-        // User is logged in
-        authSection.style.display = 'none';
-        mainContent.style.display = 'block';
-        fetchAll();
-    } else {
-        // User is not logged in
-        authSection.style.display = 'block';
-        mainContent.style.display = 'none';
-    }
-}
-
+// API helper functions
 async function get(url) {
     const response = await fetch(`${apiBaseUrl}/${url}`, {
         headers: {
@@ -68,6 +54,28 @@ async function post(url, data) {
     }
 
     return await response.json();
+}
+
+// Check if the user is logged in (by looking for a token)
+function checkAuth() {
+    const token = localStorage.getItem('token');
+    if (token) {
+        // User is logged in
+        authSection.style.display = 'none';
+        mainContent.style.display = 'block';
+        fetchAll();
+    } else {
+        // User is not logged in
+        authSection.style.display = 'block';
+        mainContent.style.display = 'none';
+    }
+}
+
+async function checkRegistation() {
+    const info = await get('info/')
+    if ( ! info["registation_open"] ) {
+        document.querySelector("#register-block").style.display = "none"
+    }
 }
 
 // Fetch Todos from API and display them
@@ -406,4 +414,5 @@ document.addEventListener('keydown', function(event) {
 // Function to initialize the page
 window.onload = function () {
     checkAuth();
+    checkRegistation();
 };
