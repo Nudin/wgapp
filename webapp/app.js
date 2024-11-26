@@ -89,19 +89,19 @@ async function fetchTodos() {
         const dueDate = new Date(todo.next_due_date).toLocaleDateString();
         const dueClass = todo.due ? 'overdue' : '';
         todoItem._data = todo;
-        const repeat = (todo.frequency >= 0) ? `<em>(every ${todo.frequency} days)</em>` : ''
+        const repeat = (todo.frequency > 0) ? `<em>(every ${todo.frequency} days)</em>` : ''
         todoItem.innerHTML = `
             <div>
                 <strong>${todo.name}</strong><br>
             ${todo.description} ${repeat}
             </div>
             <div class="duedate ${dueClass}">
-                ${new Date(todo.next_due_date).toLocaleDateString()}
+                ${todo.frequency > 0 ? new Date(todo.next_due_date).toLocaleDateString() : ''}
             </div>
             <div>
                 <button onclick="markTodoDone(${todo.id})">✅ Done</button>
-                ${!todo.due ? `<button onclick="markTodoDue(${todo.id})">🔥 Due now!</button>` : ''}
-                ${todo.due ? `<button onclick="postponeTodo(${todo.id})">❎ Postpone</button>` : ''}
+                ${!todo.due && todo.frequency > 0 ? `<button onclick="markTodoDue(${todo.id})">🔥 Due now!</button>` : ''}
+                ${todo.due && todo.frequency > 0 ? `<button onclick="postponeTodo(${todo.id})">❎ Postpone</button>` : ''}
                 <!-- Dropdown container -->
                 <div class="dropdown">
                   <button class="dropdown-toggle" onclick="toggleDropdown(this)">…</button>
@@ -211,8 +211,12 @@ addTodoForm.addEventListener('submit', async (e) => {
         frequency: document.getElementById('todoFrequency').value,
         next_due_date: document.getElementById('todoNextDueDate').value
     };
-    if( document.getElementById('todoOnetime').checked == true) {
+    if( document.getElementById('radioOnetime').checked == true) {
         newTodo.frequency = -1;
+    }
+    else if( document.getElementById('radioOnDemand').checked == true) {
+        newTodo.frequency = 0;
+        newTodo.next_due_date = "1970-01-01"
     }
 
     await post(`todos/`, newTodo);
@@ -221,10 +225,28 @@ addTodoForm.addEventListener('submit', async (e) => {
     addTodoForm.reset();
     fetchTodos();
 });
-document.getElementById('todoOnetime').addEventListener('change', e => {
-    document.getElementById('todoFrequency').disabled = e.target.checked;
-    document.getElementById('todoFrequency').style.display = e.target.checked ? "none" : "block";
-})
+
+document.querySelectorAll('input[name="typeRadio"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      // React to the change event
+      if (radio.id === 'radioRecurring') {
+        document.getElementById('todoFrequency').disabled = false;
+        document.getElementById('todoFrequency').style.display = "block";
+        document.getElementById('todoNextDueDate').disabled = false;
+        document.getElementById('todoNextDueDate').style.display = "block";
+      } else if (radio.id === 'radioOnetime') {
+        document.getElementById('todoFrequency').disabled = true;
+        document.getElementById('todoFrequency').style.display = "none";
+        document.getElementById('todoNextDueDate').disabled = false;
+        document.getElementById('todoNextDueDate').style.display = "block";
+      } else if (radio.id === 'radioOnDemand') {
+        document.getElementById('todoFrequency').disabled = true;
+        document.getElementById('todoFrequency').style.display = "none";
+        document.getElementById('todoNextDueDate').disabled = true;
+        document.getElementById('todoNextDueDate').style.display = "none";
+      }
+    });
+});
 
 // Tab Management
 function openTab(evt, tabName) {

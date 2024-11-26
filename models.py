@@ -22,6 +22,9 @@ class Todo(Base):
         # negative frequency means this is an onetime-task -> archive it
         if self.frequency < 0:
             self.archived = True
+        # 0 Is a on-demand task
+        elif self.frequency == 0:
+            pass
         else:
             # Update next_due_date by adding the frequency (in days)
             self.next_due_date = date.today() + timedelta(days=self.frequency)

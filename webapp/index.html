@@ -70,10 +70,18 @@
                 <form id="addTodoForm">
                     <input type="text" id="todoName" placeholder="Todo Name" required>
                     <textarea id="todoDescription" placeholder="Todo Description"></textarea>
-                    <span>
-                    <input type="checkbox" id="todoOnetime" name="todoOnetime">
-                    <label for="todoOnetime">Onetime-Task</label>
-                    </span>
+                    <div class="toggle-container">
+                        <input type="radio" id="radioRecurring" name="typeRadio" checked>
+                        <input type="radio" id="radioOnetime" name="typeRadio">
+                        <input type="radio" id="radioOnDemand" name="typeRadio">
+
+                        <label for="radioRecurring" class="toggle-label">Recurring task</label>
+                        <label for="radioOnetime" class="toggle-label">Onetime task</label>
+                        <label for="radioOnDemand" class="toggle-label">On-demand task</label>
+
+                        <div class="slider"></div>
+                    </div>
+
                     <input type="number" id="todoFrequency" placeholder="Frequency (days)" min="0" required>
                     <input type="date" id="todoNextDueDate" required>
                     <button type="submit">Add Todo</button>
