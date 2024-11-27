@@ -107,6 +107,10 @@ li {
     align-items: center;
 }
 
+#log-list li * {
+	width: 33%;
+}
+
 li button {
     margin-left: 10px;
 }
@@ -187,15 +191,22 @@ form button:hover {
     background-color: #45a049;
 }
 
-#stats-section, #log-list {
+#stats-section {
     margin-top: 20px;
     padding: 10px;
     background-color: #f4f4f4;
     border-radius: 8px;
-    overflow-y: auto;
     max-height: 40vh;
+}
+#log-scroll {
     flex-direction: column-reverse;
     display: flex;
+    overflow-y: auto;
+    max-height: 40vh;
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #f4f4f4;
+    border-radius: 8px;
 }
 
 #stats-section li {
