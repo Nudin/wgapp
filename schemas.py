@@ -11,6 +11,7 @@ class TodoCreate(BaseModel):
     frequency: int  # Frequency in days
     next_due_date: date
     archived: bool = False
+    tags: str = ""
 
 
 class TodoUpdate(BaseModel):
@@ -24,6 +25,7 @@ class TodoResponse(BaseModel):
     frequency: int
     next_due_date: date
     due: Optional[bool] = None
+    tags: str = ""
 
     class Config:
         from_attributes = True
@@ -56,6 +58,7 @@ class UpdateTodoRequest(BaseModel):
     frequency: Optional[int] = None
     next_due_date: Optional[date] = None
     archived: Optional[bool] = False
+    tags: Optional[str] = None
 
 
 class UserCreate(BaseModel):

@@ -74,6 +74,7 @@ def create_todo(
         description=todo.description,
         frequency=todo.frequency,
         next_due_date=todo.next_due_date,
+        tags=todo.tags,
     )
     db.add(db_todo)
     db.commit()
@@ -103,6 +104,8 @@ def update_todo(
         todo.next_due_date = update_request.next_due_date
     if update_request.archived is not None:
         todo.archived = update_request.archived
+    if update_request.tags is not None:
+        todo.tags = update_request.tags
 
     db.commit()
 
@@ -181,12 +184,15 @@ def read_todos(
     skip: int = 0,
     limit: int = 100,
     archived: bool = False,
+    tag: str = "",
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
+    search = f"%{tag}%"
     todos = (
         db.query(models.Todo)
         .filter_by(archived=archived)
+        .filter(models.Todo.tags.like(search))
         .order_by(asc(models.Todo.next_due_date))
         .offset(skip)
         .limit(limit)
@@ -205,6 +211,7 @@ def read_todos(
                 "frequency": todo.frequency,
                 "next_due_date": todo.next_due_date,
                 "due": is_due,
+                "tags": todo.tags,
             }
         )
 

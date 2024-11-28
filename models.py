@@ -15,6 +15,7 @@ class Todo(Base):
     frequency = Column(Integer, nullable=False)  # Frequency in days
     next_due_date = Column(Date, nullable=False)
     archived = Column(Boolean, default=False)
+    tags = Column(String, nullable=True, default="")
 
     logs = relationship("Log", back_populates="todo")
 
