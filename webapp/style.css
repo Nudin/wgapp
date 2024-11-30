@@ -307,3 +307,19 @@ form button:hover {
 #radioOnDemand:checked ~ .slider {
     transform: translateX(200%);
 }
+
+/* Tag buttons */
+.tag-button {
+    border-radius: 20px;
+    padding: 5px 15px;
+    margin: 5px;
+    border: 1px solid #ccc;
+    background-color: #f0f0f0;
+    cursor: pointer;
+    color: #000;
+}
+.tag-button.active {
+    background-color: #007BFF;
+    color: #fff;
+}
+

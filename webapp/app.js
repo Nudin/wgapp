@@ -85,6 +85,14 @@ async function fetchTodos() {
     todoList.innerHTML = "";
 
     todos.forEach(todo => {
+        const tags = todo.tags;
+        const tagArray = tags.split('+');
+        const urlParams = new URLSearchParams(window.location.search);
+        const tag = urlParams.get('tag');
+        if (Boolean(tag) && !tagArray.includes(tag)) {
+            return
+        }
+
         const todoItem = document.createElement('li');
         const dueDate = new Date(todo.next_due_date).toLocaleDateString();
         const dueClass = todo.due ? 'overdue' : '';
@@ -159,10 +167,88 @@ async function fetchStatistics() {
     }
 }
 
+// Function to create and add buttons for tags
+function createTagButtons(tagList) {
+    const container = document.getElementById('taglist');
+    if (!container) {
+        console.error('Element with id "taglist" not found.');
+        return;
+    }
+
+    // Get the active tag from the URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const activeTag = urlParams.get('tag');
+
+    // Clear existing buttons, if any
+    container.innerHTML = '';
+
+    tagList.forEach(tag => {
+        // Create a button
+        const button = document.createElement('button');
+        button.textContent = tag;
+        button.className = 'tag-button';
+
+        // Highlight the active button
+        if (tag === activeTag) {
+            button.classList.add('active');
+        }
+
+        // Add event listener to handle click
+        button.addEventListener('click', () => handleTagClick(tag, button));
+
+        // Append the button to the container
+        container.appendChild(button);
+    });
+
+    // Fetch todos for the active tag (if any)
+    if (activeTag) {
+        fetchTodos();
+    }
+}
+
+// Function to handle tag button click
+function handleTagClick(tag, button) {
+    // Update the URL parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentTag = urlParams.get('tag');
+
+    // Check if the button is already active
+    if (currentTag === tag) {
+        // Remove the filter
+        urlParams.delete('tag');
+        window.history.pushState({}, '', `${window.location.pathname}?${urlParams}`);
+
+        // Reset button styles
+        document.querySelectorAll('.tag-button').forEach(btn => btn.classList.remove('active'));
+
+        console.log('Filter disabled');
+        fetchTodos(); // Fetch without any filter
+        return;
+    }
+
+    // Otherwise, set the filter to the clicked tag
+    urlParams.set('tag', tag);
+    window.history.pushState({}, '', `${window.location.pathname}?${urlParams}`);
+
+    // Update button styles
+    document.querySelectorAll('.tag-button').forEach(btn => btn.classList.remove('active'));
+    button.classList.add('active');
+
+    // Call the fetchTodos function with the selected tag
+    fetchTodos();
+}
+
+
+async function fetchTags() {
+    const logs = await get("tags")
+    createTagButtons(logs);
+}
+
 function fetchAll() {
     fetchTodos();
     fetchLogs();
     fetchStatistics();
+    fetchTags()
 }
 
 // Mark a Todo as Done
@@ -208,6 +294,7 @@ addTodoForm.addEventListener('submit', async (e) => {
     const newTodo = {
         name: document.getElementById('todoName').value,
         description: document.getElementById('todoDescription').value,
+        tags: document.getElementById('todoTags').value,
         frequency: document.getElementById('todoFrequency').value,
         next_due_date: document.getElementById('todoNextDueDate').value
     };
@@ -308,10 +395,11 @@ async function showDetails(event) {
 }
 
 // Function to open the modal with the current todo's data
-function openEditModal(todoId, name, description, frequency, nextDueDate) {
+function openEditModal(todoId, name, description, tags, frequency, nextDueDate) {
     currentTodoId = todoId; // Set the current todo ID
     document.getElementById('editName').value = name;
     document.getElementById('editDescription').value = description;
+    document.getElementById('editTags').value = tags;
     document.getElementById('editFrequency').value = frequency;
     document.getElementById('editDueDate').value = nextDueDate;
     openModal('editModal')
@@ -321,6 +409,7 @@ function openEditModal(todoId, name, description, frequency, nextDueDate) {
 async function submitEditTodo() {
     const name = document.getElementById('editName').value;
     const description = document.getElementById('editDescription').value;
+    const tags = document.getElementById('editTags').value;
     const frequency = document.getElementById('editFrequency').value;
     const nextDueDate = document.getElementById('editDueDate').value;
     const archived = document.getElementById('editArchived').checked;
@@ -329,6 +418,7 @@ async function submitEditTodo() {
     const updates = {};
     if (name) updates.name = name;
     if (description) updates.description = description;
+    if (tags) updates.tags = tags;
     if (frequency) updates.frequency = parseInt(frequency, 10);
     if (nextDueDate) updates.next_due_date = nextDueDate;
     updates.archived = archived;
@@ -345,7 +435,7 @@ async function submitEditTodo() {
 // Function to open the edit modal when the "Edit" button is clicked
 function editTodoButton(event) {
     todo = event.target.closest("li")._data
-    openEditModal(todo.id, todo.name, todo.description, todo.frequency, todo.next_due_date);
+    openEditModal(todo.id, todo.name, todo.description, todo.tags, todo.frequency, todo.next_due_date);
 }
 
 // Handle User Registration

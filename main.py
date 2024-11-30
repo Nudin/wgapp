@@ -338,6 +338,16 @@ def get_task_statistics_for_task(
     return stats
 
 
+@router.get("/tags", tags=["tags"])
+def get_tag_list(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    results = db.query(models.Todo.tags).all()
+    tags = set([s for t in results for s in t[0].split("+")]) - {""}
+    return tags
+
+
 @router.get("/info", tags=["info"])
 def get_info():
     return {

@@ -60,6 +60,8 @@
 
             <!-- Todos Tab Content -->
             <div id="Todos" class="tabcontent active">
+                <div id="taglist">
+                </div>
                 <h2>Todos</h2>
                 <ul id="todoList"></ul>
             </div>
@@ -68,8 +70,9 @@
             <div id="AddTodo" class="tabcontent">
                 <h2>Add New Todo</h2>
                 <form id="addTodoForm">
-                    <input type="text" id="todoName" placeholder="Todo Name" required>
-                    <textarea id="todoDescription" placeholder="Todo Description"></textarea>
+                    <input type="text" id="todoName" placeholder="Name" required>
+                    <textarea id="todoDescription" placeholder="Description"></textarea>
+                    <input type="text" id="todoTags" placeholder="Tags (foo+bar)"></textarea>
                     <div class="toggle-container">
                         <input type="radio" id="radioRecurring" name="typeRadio" checked>
                         <input type="radio" id="radioOnetime" name="typeRadio">
@@ -109,6 +112,9 @@
                     
                     <label for="editDescription">Description</label>
                     <input type="text" id="editDescription" name="description" placeholder="Enter new description">
+                    
+                    <label for="editTags">Tags</label>
+                    <input type="text" id="editTags" name="tags" placeholder="Enter new tags">
                     
                     <label for="editFrequency">Frequency (days)</label>
                     <input type="number" id="editFrequency" name="frequency" placeholder="Enter new frequency in days">
