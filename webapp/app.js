@@ -6,7 +6,19 @@ const logList = document.getElementById('logList');
 const addTodoForm = document.getElementById('addTodoForm');
 const authSection = document.getElementById('auth-section');
 const mainContent = document.getElementById('main-content');
-const errorMessageElement = document.getElementById('error-message');
+
+function hide(element) {
+    element.style.display = "none"
+    if(element.disabled !== undefined) {
+        element.disabled = true;
+    }
+}
+function unhide(element) {
+    element.style.display = "unset"
+    if(element.disabled !== undefined) {
+        element.disabled = false;
+    }
+}
 
 // API helper functions
 async function get(url) {
@@ -56,40 +68,42 @@ async function post(url, data) {
     return await response.json();
 }
 
+function getActiveTag() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('tag');
+}
+
 // Check if the user is logged in (by looking for a token)
 function checkAuth() {
     const token = localStorage.getItem('token');
     if (token) {
         // User is logged in
-        authSection.style.display = 'none';
-        mainContent.style.display = 'block';
+        hide(authSection);
+        unhide(mainContent);
         fetchAll();
     } else {
         // User is not logged in
-        authSection.style.display = 'block';
-        mainContent.style.display = 'none';
+        unhide(authSection);
+        hide(mainContent);
     }
 }
 
 async function checkRegistation() {
     const info = await get('info/')
     if ( ! info["registation_open"] ) {
-        document.querySelector("#register-block").style.display = "none"
+        hide(document.querySelector("#register-block"))
     }
 }
 
 // Fetch Todos from API and display them
 async function fetchTodos() {
     const todos = await get('todos/')
-    const todoList = document.getElementById("todoList");
+    const tag = getActiveTag()
     todoList.innerHTML = "";
 
     todos.forEach(todo => {
-        const tags = todo.tags;
-        const tagArray = tags.split('+');
-        const urlParams = new URLSearchParams(window.location.search);
-        const tag = urlParams.get('tag');
-        if (Boolean(tag) && !tagArray.includes(tag)) {
+        const tagArray = todo.tags.split('+');
+        if ( tag && !tagArray.includes(tag)) {
             return
         }
 
@@ -104,12 +118,12 @@ async function fetchTodos() {
             ${todo.description} ${repeat}
             </div>
             <div class="duedate ${dueClass}">
-                ${todo.frequency > 0 ? new Date(todo.next_due_date).toLocaleDateString() : ''}
+                ${todo.frequency != 0 ? duedate : ''}
             </div>
             <div>
                 <button onclick="markTodoDone(${todo.id})">✅ Done</button>
-                ${!todo.due && todo.frequency > 0 ? `<button onclick="markTodoDue(${todo.id})">🔥 Due now!</button>` : ''}
-                ${todo.due && todo.frequency > 0 ? `<button onclick="postponeTodo(${todo.id})">❎ Postpone</button>` : ''}
+                ${!todo.due && todo.frequency != 0 ? `<button onclick="markTodoDue(${todo.id})">🔥 Due now!</button>` : ''}
+                ${todo.due && todo.frequency != 0 ? `<button onclick="postponeTodo(${todo.id})">❎ Postpone</button>` : ''}
                 <!-- Dropdown container -->
                 <div class="dropdown">
                   <button class="dropdown-toggle" onclick="toggleDropdown(this)">…</button>
@@ -132,7 +146,6 @@ async function fetchTodos() {
 async function fetchLogs() {
     try {
         const logs = await get('logs/');
-        const logList = document.getElementById('log-list');
 
         logList.innerHTML = '';
         logs.forEach(log => {
@@ -170,14 +183,9 @@ async function fetchStatistics() {
 // Function to create and add buttons for tags
 function createTagButtons(tagList) {
     const container = document.getElementById('taglist');
-    if (!container) {
-        console.error('Element with id "taglist" not found.');
-        return;
-    }
 
     // Get the active tag from the URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const activeTag = urlParams.get('tag');
+    const activeTag = getActiveTag()
 
     // Clear existing buttons, if any
     container.innerHTML = '';
@@ -208,33 +216,21 @@ function createTagButtons(tagList) {
 
 // Function to handle tag button click
 function handleTagClick(tag, button) {
-    // Update the URL parameter
     const urlParams = new URLSearchParams(window.location.search);
-    const currentTag = urlParams.get('tag');
 
-    // Check if the button is already active
-    if (currentTag === tag) {
-        // Remove the filter
+    // Reset button styles
+    document.querySelectorAll('.tag-button').forEach(btn => btn.classList.remove('active'));
+
+    // If filter was already active, deactivate it
+    if (getActiveTag() === tag) {
         urlParams.delete('tag');
-        window.history.pushState({}, '', `${window.location.pathname}?${urlParams}`);
-
-        // Reset button styles
-        document.querySelectorAll('.tag-button').forEach(btn => btn.classList.remove('active'));
-
-        console.log('Filter disabled');
-        fetchTodos(); // Fetch without any filter
-        return;
+    }
+    else {
+        urlParams.set('tag', tag);
+        button.classList.add('active');
     }
 
-    // Otherwise, set the filter to the clicked tag
-    urlParams.set('tag', tag);
     window.history.pushState({}, '', `${window.location.pathname}?${urlParams}`);
-
-    // Update button styles
-    document.querySelectorAll('.tag-button').forEach(btn => btn.classList.remove('active'));
-    button.classList.add('active');
-
-    // Call the fetchTodos function with the selected tag
     fetchTodos();
 }
 
@@ -317,20 +313,14 @@ document.querySelectorAll('input[name="typeRadio"]').forEach(radio => {
     radio.addEventListener('change', () => {
       // React to the change event
       if (radio.id === 'radioRecurring') {
-        document.getElementById('todoFrequency').disabled = false;
-        document.getElementById('todoFrequency').style.display = "block";
-        document.getElementById('todoNextDueDate').disabled = false;
-        document.getElementById('todoNextDueDate').style.display = "block";
+        unhide(document.getElementById('todoFrequency'));
+        unhide(document.getElementById('todoNextDueDate'));
       } else if (radio.id === 'radioOnetime') {
-        document.getElementById('todoFrequency').disabled = true;
-        document.getElementById('todoFrequency').style.display = "none";
-        document.getElementById('todoNextDueDate').disabled = false;
-        document.getElementById('todoNextDueDate').style.display = "block";
+        hide(document.getElementById('todoFrequency'));
+        unhide(document.getElementById('todoNextDueDate'));
       } else if (radio.id === 'radioOnDemand') {
-        document.getElementById('todoFrequency').disabled = true;
-        document.getElementById('todoFrequency').style.display = "none";
-        document.getElementById('todoNextDueDate').disabled = true;
-        document.getElementById('todoNextDueDate').style.display = "none";
+        hide(document.getElementById('todoFrequency'));
+        hide(document.getElementById('todoNextDueDate'));
       }
     });
 });
@@ -356,10 +346,10 @@ let currentTodoId = null; // Variable to hold the current todo ID being edited
 
 // Function to open/close a modal
 function openModal(modalName) {
-    document.getElementById(modalName).style.display = 'block';
+    unhide(document.getElementById(modalName));
 }
 function closeModal(modalName) {
-    document.getElementById(modalName).style.display = 'none';
+    hide(document.getElementById(modalName));
 }
 
 async function showDetails(event) {
@@ -488,11 +478,12 @@ document.getElementById('login-form').addEventListener('submit', async function 
 
 // Function to display error messages
 function showError(message) {
+    const errorMessageElement = document.getElementById('error-message');
     if (message) {
         errorMessageElement.textContent = message;
-        errorMessageElement.style.display = 'block';
+        unhide(errorMessageElement);
     } else {
-        errorMessageElement.style.display = 'none'; // Hide if no error
+        hide(errorMessageElement);
     }
 }
 
@@ -506,10 +497,7 @@ window.addEventListener('click', function(event) {
   if (!event.target.matches('.dropdown-toggle')) {
     const dropdowns = document.getElementsByClassName('dropdown-menu');
     for (let i = 0; i < dropdowns.length; i++) {
-      const openDropdown = dropdowns[i];
-      if (openDropdown.style.display === 'block') {
-        openDropdown.style.display = 'none';
-      }
+      hide(dropdowns[i]);
     }
   }
 });

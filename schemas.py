@@ -14,10 +14,6 @@ class TodoCreate(BaseModel):
     tags: str = ""
 
 
-class TodoUpdate(BaseModel):
-    id: int
-
-
 class TodoResponse(BaseModel):
     id: int
     name: str
@@ -31,9 +27,22 @@ class TodoResponse(BaseModel):
         from_attributes = True
 
 
+class UpdateTodoRequest(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    frequency: Optional[int] = None
+    next_due_date: Optional[date] = None
+    archived: Optional[bool] = False
+    tags: Optional[str] = None
+
+
 # New schema for marking todo as done with username
 class TodoMarkDone(BaseModel):
     username: Optional[str] = None
+
+
+class PostponeRequest(BaseModel):
+    new_due_date: date
 
 
 # Modify LogResponse to include the Todo name
@@ -46,19 +55,6 @@ class LogResponse(BaseModel):
 
     class Config:
         from_attributes = True
-
-
-class PostponeRequest(BaseModel):
-    new_due_date: date
-
-
-class UpdateTodoRequest(BaseModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
-    frequency: Optional[int] = None
-    next_due_date: Optional[date] = None
-    archived: Optional[bool] = False
-    tags: Optional[str] = None
 
 
 class UserCreate(BaseModel):
