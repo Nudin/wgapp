@@ -1,8 +1,5 @@
-const apiBaseUrl = '/api';  // Adjust the base URL as necessary
-
 // DOM Elements
 const todoList = document.getElementById('todoList');
-const logList = document.getElementById('logList');
 const addTodoForm = document.getElementById('addTodoForm');
 const authSection = document.getElementById('auth-section');
 const mainContent = document.getElementById('main-content');
@@ -21,52 +18,73 @@ function unhide(element) {
 }
 
 // API helper functions
-async function get(url) {
-    const response = await fetch(`${apiBaseUrl}/${url}`, {
-        headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+class API {
+    apiBaseUrl = '/api';  // Adjust the base URL as necessary
+    headers() {
+        return {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+    }
+
+    async login(username, password) {
+        const response = await fetch(`/api/token`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'Incorrect username or password');
         }
-    });
-    if (response.status === 401) {
-        console.log("Token invalid")
-        localStorage.removeItem('token');
-        checkAuth();
-        return {};
-    }
-    return response.json();
-}
-async function put(url, data) {
-    const response = await fetch(`${apiBaseUrl}/${url}`, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(data),
-    });
-    if (!response.ok) {
-        throw new Error("Network response was not ok");
+
+        // Store the access token in localStorage
+        const result = await response.json();
+        console.log('Logged in:', result);
+        localStorage.setItem('token', result.access_token);
     }
 
-    return await response.json();
-}
-async function post(url, data) {
-    const response = await fetch(`${apiBaseUrl}/${url}`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(data),
-    });
-    if (!response.ok) {
-        let err = new Error("Network response was not ok");
-        err._data = response.json();
-        throw err;
+     async  get(url) {
+        const response = await fetch(`${this.apiBaseUrl}/${url}`, {
+            headers: this.headers()
+        });
+        if (response.status === 401) {
+            console.log("Token invalid")
+            localStorage.removeItem('token');
+            checkAuth();
+            return {};
+        }
+        return response.json();
     }
+     async put(url, data) {
+        const response = await fetch(`${this.apiBaseUrl}/${url}`, {
+            method: 'PUT',
+            headers: this.headers(),
+            body: JSON.stringify(data),
+        });
+        if (!response.ok) {
+            throw new Error("Network response was not ok");
+        }
 
-    return await response.json();
+        return await response.json();
+    }
+     async  post(url, data) {
+        const response = await fetch(`${this.apiBaseUrl}/${url}`, {
+            method: "POST",
+            headers: this.headers(),
+            body: JSON.stringify(data),
+        });
+        if (!response.ok) {
+            let err = new Error("Network response was not ok");
+            err._data = response.json();
+            throw err;
+        }
+
+        return await response.json();
+    }
 }
+api = new API();
 
 function getActiveTag() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -89,7 +107,7 @@ function checkAuth() {
 }
 
 async function checkRegistation() {
-    const info = await get('info/')
+    const info = await api.get('info/')
     if ( ! info["registation_open"] ) {
         hide(document.querySelector("#register-block"))
     }
@@ -97,7 +115,7 @@ async function checkRegistation() {
 
 // Fetch Todos from API and display them
 async function fetchTodos() {
-    const todos = await get('todos/')
+    const todos = await api.get('todos/')
     const tag = getActiveTag()
     todoList.innerHTML = "";
 
@@ -118,7 +136,7 @@ async function fetchTodos() {
             ${todo.description} ${repeat}
             </div>
             <div class="duedate ${dueClass}">
-                ${todo.frequency != 0 ? duedate : ''}
+                ${todo.frequency != 0 ? dueDate : ''}
             </div>
             <div>
                 <button onclick="markTodoDone(${todo.id})">✅ Done</button>
@@ -145,7 +163,8 @@ async function fetchTodos() {
 // Fetch Logs from API and display them
 async function fetchLogs() {
     try {
-        const logs = await get('logs/');
+        const logs = await api.get('logs/');
+        const logList = document.getElementById('log-list');
 
         logList.innerHTML = '';
         logs.forEach(log => {
@@ -166,7 +185,7 @@ async function fetchLogs() {
 // Function to fetch statistics and display them
 async function fetchStatistics() {
     try {
-        const stats = await get('stats');
+        const stats = await api.get('stats');
         const statsSection = document.getElementById('stats-section');
         statsSection.innerHTML = '';  // Clear any previous content
 
@@ -236,7 +255,7 @@ function handleTagClick(tag, button) {
 
 
 async function fetchTags() {
-    const logs = await get("tags")
+    const logs = await api.get("tags")
     createTagButtons(logs);
 }
 
@@ -249,12 +268,12 @@ function fetchAll() {
 
 // Mark a Todo as Done
 async function markTodoDone(todoId) {
-    await put(`todos/${todoId}/done`, {});
+    await api.put(`todos/${todoId}/done`, {});
     fetchAll();
 }
 async function markTodoDoneByGuest(todoId) {
     const username = prompt("Please enter username")
-    await put(`todos/${todoId}/done`, {"username": username});
+    await api.put(`todos/${todoId}/done`, {"username": username});
     fetchAll();
 }
 
@@ -265,7 +284,7 @@ async function postponeTodo(todoId) {
 
     if (newDueDate) {
         try {
-            await post(`todos/${todoId}/postpone/`, { new_due_date: newDueDate });
+            await api.post(`todos/${todoId}/postpone/`, { new_due_date: newDueDate });
             fetchTodos(); // Refresh the todo list after postponing
         } catch (error) {
             alert("Failed to postpone todo. Please try again." + error);
@@ -274,13 +293,13 @@ async function postponeTodo(todoId) {
 }
 
 async function markTodoArchived(todoId) {
-    await put(`todos/${todoId}/`, {"archived": true});
+    await api.put(`todos/${todoId}/`, {"archived": true});
     fetchAll();
 }
 
 // Mark a Todo as Due Today
 async function markTodoDue(todoId) {
-    await put(`todos/${todoId}/due`, null);
+    await api.put(`todos/${todoId}/due`, null);
     fetchTodos();
 }
 
@@ -302,7 +321,7 @@ addTodoForm.addEventListener('submit', async (e) => {
         newTodo.next_due_date = "1970-01-01"
     }
 
-    await post(`todos/`, newTodo);
+    await api.post(`todos/`, newTodo);
 
     // Clear form and refresh todos
     addTodoForm.reset();
@@ -341,7 +360,6 @@ function openTab(evt, tabName) {
     evt.currentTarget.classList.add("active");
 }
 
-let currentTodoId = null; // Variable to hold the current todo ID being edited
 
 
 // Function to open/close a modal
@@ -354,8 +372,8 @@ function closeModal(modalName) {
 
 async function showDetails(event) {
     todo = event.target.closest("li")._data
-    const logs = await get("logs/" + todo.id)
-    const stats = await get("stats/" + todo.id)
+    const logs = await api.get("logs/" + todo.id)
+    const stats = await api.get("stats/" + todo.id)
     const content = document.querySelector('#detailsModal .content');
     content.innerHTML = '';
 
@@ -386,7 +404,7 @@ async function showDetails(event) {
 
 // Function to open the modal with the current todo's data
 function openEditModal(todoId, name, description, tags, frequency, nextDueDate) {
-    currentTodoId = todoId; // Set the current todo ID
+    document.getElementById('editId').value = todoId;
     document.getElementById('editName').value = name;
     document.getElementById('editDescription').value = description;
     document.getElementById('editTags').value = tags;
@@ -403,6 +421,7 @@ async function submitEditTodo() {
     const frequency = document.getElementById('editFrequency').value;
     const nextDueDate = document.getElementById('editDueDate').value;
     const archived = document.getElementById('editArchived').checked;
+    const id = document.getElementById('editId').value;
 
     // Create an object to hold the updates
     const updates = {};
@@ -414,7 +433,7 @@ async function submitEditTodo() {
     updates.archived = archived;
 
     try {
-        await put(`todos/${currentTodoId}/`, updates);
+        await api.put(`todos/${id}/`, updates);
         closeModal('editModal');
         fetchTodos(); // Refresh the todo list after updating
     } catch (error) {
@@ -435,7 +454,7 @@ document.getElementById('register-form').addEventListener('submit', async functi
     const password = document.getElementById('register-password').value;
 
     try {
-        const result = await post(`register`, { username, password });
+        const result = await api.post(`register`, { username, password });
         console.log('User registered:', result);
         showError(''); // Clear any previous error
         // TODO: Log the user in or show success
@@ -452,27 +471,11 @@ document.getElementById('login-form').addEventListener('submit', async function 
     const password = document.getElementById('login-password').value;
 
     try {
-        const response = await fetch(`${apiBaseUrl}/token`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            showError(`Login failed: ${errorData.detail || 'Incorrect username or password'}`);
-        } else {
-            const result = await response.json();
-            console.log('Logged in:', result);
-
-            // Store the access token in localStorage
-            localStorage.setItem('token', result.access_token);
-
-            showError(''); // Clear any previous error
-            checkAuth();   // Proceed to the main content
-        }
+        await api.login(username, password);
+        showError(''); // Clear any previous error
+        checkAuth();   // Proceed to the main content
     } catch (error) {
-        showError('Login failed: Unable to connect to the server.');
+        showError(`Login failed: ${error.message}`);
     }
 });
 
