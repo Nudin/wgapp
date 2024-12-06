@@ -61,3 +61,11 @@ class User(Base):
 
     # Relationship with logs (for task completion tracking)
     # logs = relationship("Log", back_populates="user")
+
+
+class Shopping(Base):
+    __tablename__ = "shopping"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False)
+    description = Column(String, nullable=True)

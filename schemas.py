@@ -74,3 +74,18 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     username: str | None = None
+
+
+class ShoppingAdd(BaseModel):
+    title: str
+    description: str | None = None
+
+
+class ShoppingResponse(BaseModel):
+    id: int
+    title: str
+    description: str | None = None
+
+
+class ShoppingMarkDone(BaseModel):
+    id: int
