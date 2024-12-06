@@ -91,27 +91,6 @@ function getActiveTag() {
     return urlParams.get('tag');
 }
 
-// Check if the user is logged in (by looking for a token)
-function checkAuth() {
-    const token = localStorage.getItem('token');
-    if (token) {
-        // User is logged in
-        hide(authSection);
-        unhide(mainContent);
-        fetchAll();
-    } else {
-        // User is not logged in
-        unhide(authSection);
-        hide(mainContent);
-    }
-}
-
-async function checkRegistation() {
-    const info = await api.get('info/')
-    if ( ! info["registation_open"] ) {
-        hide(document.querySelector("#register-block"))
-    }
-}
 
 // Fetch Todos from API and display them
 async function fetchTodos() {
@@ -199,61 +178,6 @@ async function fetchStatistics() {
     }
 }
 
-// Function to create and add buttons for tags
-function createTagButtons(tagList) {
-    const container = document.getElementById('taglist');
-
-    // Get the active tag from the URL
-    const activeTag = getActiveTag()
-
-    // Clear existing buttons, if any
-    container.innerHTML = '';
-
-    tagList.forEach(tag => {
-        // Create a button
-        const button = document.createElement('button');
-        button.textContent = tag;
-        button.className = 'tag-button';
-
-        // Highlight the active button
-        if (tag === activeTag) {
-            button.classList.add('active');
-        }
-
-        // Add event listener to handle click
-        button.addEventListener('click', () => handleTagClick(tag, button));
-
-        // Append the button to the container
-        container.appendChild(button);
-    });
-
-    // Fetch todos for the active tag (if any)
-    if (activeTag) {
-        fetchTodos();
-    }
-}
-
-// Function to handle tag button click
-function handleTagClick(tag, button) {
-    const urlParams = new URLSearchParams(window.location.search);
-
-    // Reset button styles
-    document.querySelectorAll('.tag-button').forEach(btn => btn.classList.remove('active'));
-
-    // If filter was already active, deactivate it
-    if (getActiveTag() === tag) {
-        urlParams.delete('tag');
-    }
-    else {
-        urlParams.set('tag', tag);
-        button.classList.add('active');
-    }
-
-    window.history.pushState({}, '', `${window.location.pathname}?${urlParams}`);
-    fetchTodos();
-}
-
-
 async function fetchTags() {
     const logs = await api.get("tags")
     createTagButtons(logs);
@@ -265,6 +189,8 @@ function fetchAll() {
     fetchStatistics();
     fetchTags()
 }
+
+/*** Todo core functions ***/
 
 // Mark a Todo as Done
 async function markTodoDone(todoId) {
@@ -281,7 +207,6 @@ async function markTodoDoneByGuest(todoId) {
 async function postponeTodo(todoId) {
     const newDueDate = prompt("Please enter the new due date (YYYY-MM-DD):",
                               new Date().toISOString().split('T')[0]);
-
     if (newDueDate) {
         try {
             await api.post(`todos/${todoId}/postpone/`, { new_due_date: newDueDate });
@@ -297,14 +222,13 @@ async function markTodoArchived(todoId) {
     fetchAll();
 }
 
-// Mark a Todo as Due Today
 async function markTodoDue(todoId) {
     await api.put(`todos/${todoId}/due`, null);
     fetchTodos();
 }
 
 // Add a new Todo
-addTodoForm.addEventListener('submit', async (e) => {
+async function addNewTodo() {
     e.preventDefault();
     const newTodo = {
         name: document.getElementById('todoName').value,
@@ -326,49 +250,11 @@ addTodoForm.addEventListener('submit', async (e) => {
     // Clear form and refresh todos
     addTodoForm.reset();
     fetchTodos();
-});
-
-document.querySelectorAll('input[name="typeRadio"]').forEach(radio => {
-    radio.addEventListener('change', () => {
-      // React to the change event
-      if (radio.id === 'radioRecurring') {
-        unhide(document.getElementById('todoFrequency'));
-        unhide(document.getElementById('todoNextDueDate'));
-      } else if (radio.id === 'radioOnetime') {
-        hide(document.getElementById('todoFrequency'));
-        unhide(document.getElementById('todoNextDueDate'));
-      } else if (radio.id === 'radioOnDemand') {
-        hide(document.getElementById('todoFrequency'));
-        hide(document.getElementById('todoNextDueDate'));
-      }
-    });
-});
-
-// Tab Management
-function openTab(evt, tabName) {
-    const tabcontent = document.getElementsByClassName("tabcontent");
-    for (let i = 0; i < tabcontent.length; i++) {
-        tabcontent[i].classList.remove("active");
-    }
-
-    const tablinks = document.getElementsByClassName("tablinks");
-    for (let i = 0; i < tablinks.length; i++) {
-        tablinks[i].classList.remove("active");
-    }
-
-    document.getElementById(tabName).classList.add("active");
-    evt.currentTarget.classList.add("active");
 }
+addTodoForm.addEventListener('submit', addNewTodo);
 
 
-
-// Function to open/close a modal
-function openModal(modalName) {
-    unhide(document.getElementById(modalName));
-}
-function closeModal(modalName) {
-    hide(document.getElementById(modalName));
-}
+/*** Details and edit popup ***/
 
 async function showDetails(event) {
     todo = event.target.closest("li")._data
@@ -447,8 +333,125 @@ function editTodoButton(event) {
     openEditModal(todo.id, todo.name, todo.description, todo.tags, todo.frequency, todo.next_due_date);
 }
 
-// Handle User Registration
-document.getElementById('register-form').addEventListener('submit', async function (event) {
+
+/*** UI Elements ***/
+
+// Tab Management
+function openTab(evt, tabName) {
+    const tabcontent = document.getElementsByClassName("tabcontent");
+    for (let i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].classList.remove("active");
+    }
+
+    const tablinks = document.getElementsByClassName("tablinks");
+    for (let i = 0; i < tablinks.length; i++) {
+        tablinks[i].classList.remove("active");
+    }
+
+    document.getElementById(tabName).classList.add("active");
+    evt.currentTarget.classList.add("active");
+}
+
+// On page "Add todo" hide irrelevant fields
+document.querySelectorAll('input[name="typeRadio"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      // React to the change event
+      if (radio.id === 'radioRecurring') {
+        unhide(document.getElementById('todoFrequency'));
+        unhide(document.getElementById('todoNextDueDate'));
+      } else if (radio.id === 'radioOnetime') {
+        hide(document.getElementById('todoFrequency'));
+        unhide(document.getElementById('todoNextDueDate'));
+      } else if (radio.id === 'radioOnDemand') {
+        hide(document.getElementById('todoFrequency'));
+        hide(document.getElementById('todoNextDueDate'));
+      }
+    });
+});
+
+
+/*** Tags ***/
+
+function createTagButtons(tagList) {
+    const container = document.getElementById('taglist');
+
+    // Get currently active tag from the URL
+    const activeTag = getActiveTag()
+
+    container.innerHTML = '';
+
+    tagList.forEach(tag => {
+        const button = document.createElement('button');
+        button.textContent = tag;
+        button.className = 'tag-button';
+
+        // Highlight the active button
+        if (tag === activeTag) {
+            button.classList.add('active');
+        }
+
+        button.addEventListener('click', () => handleTagClick(tag, button));
+
+        container.appendChild(button);
+    });
+}
+
+// Function to handle tag button click
+function handleTagClick(tag, button) {
+    const urlParams = new URLSearchParams(window.location.search);
+
+    // Reset button styles
+    document.querySelectorAll('.tag-button').forEach(btn => btn.classList.remove('active'));
+
+    // If filter was already active, deactivate it
+    if (getActiveTag() === tag) {
+        urlParams.delete('tag');
+    }
+    else {
+        urlParams.set('tag', tag);
+        button.classList.add('active');
+    }
+
+    window.history.pushState({}, '', `${window.location.pathname}?${urlParams}`);
+    fetchTodos();
+}
+
+
+/*** Login/Registration ***/
+
+// Check if the user is logged in (by looking for a token)
+function checkAuth() {
+    const token = localStorage.getItem('token');
+    if (token) {
+        // User is logged in
+        hide(authSection);
+        unhide(mainContent);
+        fetchAll();
+    } else {
+        // User is not logged in
+        unhide(authSection);
+        hide(mainContent);
+    }
+}
+
+async function checkRegistation() {
+    const info = await api.get('info/')
+    if ( ! info["registation_open"] ) {
+        hide(document.querySelector("#register-block"))
+    }
+}
+// Function to display login-error messages
+function showError(message) {
+    const errorMessageElement = document.getElementById('error-message');
+    if (message) {
+        errorMessageElement.textContent = message;
+        unhide(errorMessageElement);
+    } else {
+        hide(errorMessageElement);
+    }
+}
+
+async function register(event) {
     event.preventDefault();
     const username = document.getElementById('register-username').value;
     const password = document.getElementById('register-password').value;
@@ -462,10 +465,9 @@ document.getElementById('register-form').addEventListener('submit', async functi
         const reason = error._data || "Unknown error";
         showError(`Registration failed: ${error._data}`);
     }
-});
+}
 
-// Handle User Login
-document.getElementById('login-form').addEventListener('submit', async function (event) {
+async function login(event) {
     event.preventDefault();
     const username = document.getElementById('login-username').value;
     const password = document.getElementById('login-password').value;
@@ -477,18 +479,12 @@ document.getElementById('login-form').addEventListener('submit', async function 
     } catch (error) {
         showError(`Login failed: ${error.message}`);
     }
-});
-
-// Function to display error messages
-function showError(message) {
-    const errorMessageElement = document.getElementById('error-message');
-    if (message) {
-        errorMessageElement.textContent = message;
-        unhide(errorMessageElement);
-    } else {
-        hide(errorMessageElement);
-    }
 }
+document.getElementById('register-form').addEventListener('submit', register);
+document.getElementById('login-form').addEventListener('submit', login);
+
+
+/*** Popup and dropdown handling ***/
 
 function toggleDropdown(element) {
   const dropdownMenu = element.nextElementSibling;
@@ -513,6 +509,14 @@ document.addEventListener('keydown', function(event) {
     closeModal('detailsModal')
   }
 });
+
+// Function to open/close a modal
+function openModal(modalName) {
+    unhide(document.getElementById(modalName));
+}
+function closeModal(modalName) {
+    hide(document.getElementById(modalName));
+}
 
 // Function to initialize the page
 window.onload = function () {
