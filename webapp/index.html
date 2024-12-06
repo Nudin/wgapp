@@ -55,6 +55,7 @@
             <div class="tab">
                 <button class="tablinks active" onclick="openTab(event, 'Todos')">Todos</button>
                 <button class="tablinks" onclick="openTab(event, 'AddTodo')">Add Todo</button>
+                <button class="tablinks" onclick="openTab(event, 'Shopping')">Shopping List</button>
                 <button class="tablinks" onclick="openTab(event, 'Logs')">Logs</button>
             </div>
 
@@ -88,6 +89,17 @@
                     <input type="number" id="todoFrequency" placeholder="Frequency (days)" min="0" required>
                     <input type="date" id="todoNextDueDate" required>
                     <button type="submit">Add Todo</button>
+                </form>
+            </div>
+
+            <!-- Shopping List Content -->
+            <div id="Shopping" class="tabcontent">
+                <h2>Shopping List</h2>
+                <div id="shopping"></div>
+                <form id="addShoppingArticle">
+                    <input type="text" id="shoppingArticle" placeholder="Article" required>
+                    <input type="text" id="shoppingDesc" placeholder="Details">
+                    <button type="submit">Add to Shopping list</button>
                 </form>
             </div>
 

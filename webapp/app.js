@@ -83,6 +83,16 @@ class API {
 
         return await response.json();
     }
+    async  delete(url) {
+        const response = await fetch(`${this.apiBaseUrl}/${url}`, {
+            method: "DELETE",
+            headers: this.headers()
+        });
+        if (!response.ok) {
+            throw new Error("Network response was not ok");
+        }
+        return response.json();
+    }
 }
 api = new API();
 
@@ -183,11 +193,29 @@ async function fetchTags() {
     createTagButtons(logs);
 }
 
+// Function to fetch statistics and display them
+async function fetchShopping() {
+    try {
+        const shopping = await api.get('shopping');
+        const shoppingSection = document.getElementById('shopping');
+        shoppingSection.innerHTML = '';  // Clear any previous content
+
+        shopping.forEach(article => {
+            const articleItem = document.createElement('li');
+            articleItem.innerHTML = `<strong>${article.title}</strong><span>${article.description}</span><button onclick="shoppingDone(${article.id})">✅</button>`;
+            shoppingSection.appendChild(articleItem);
+        });
+    } catch (error) {
+        console.error('Error fetching shopping list:', error);
+    }
+}
+
 function fetchAll() {
     fetchTodos();
     fetchLogs();
     fetchStatistics();
     fetchTags()
+    fetchShopping()
 }
 
 /*** Todo core functions ***/
@@ -228,7 +256,7 @@ async function markTodoDue(todoId) {
 }
 
 // Add a new Todo
-async function addNewTodo() {
+async function addNewTodo(e) {
     e.preventDefault();
     const newTodo = {
         name: document.getElementById('todoName').value,
@@ -369,6 +397,25 @@ document.querySelectorAll('input[name="typeRadio"]').forEach(radio => {
     });
 });
 
+/*** Shopping ***/
+async function addArticleToShoppingList(e) {
+    e.preventDefault();
+    const article = {
+        title: document.getElementById('shoppingArticle').value,
+        description: document.getElementById('shoppingDesc').value,
+    };
+    await api.post(`shopping/`, article);
+
+    // Clear form and refresh todos
+    addShoppingArticle.reset();
+    fetchShopping();
+}
+async function shoppingDone(articleId) {
+    console.log(articleId)
+    await api.delete(`shopping/${articleId}`)
+    fetchShopping();
+}
+addShoppingArticle.addEventListener('submit', addArticleToShoppingList);
 
 /*** Tags ***/
 

@@ -326,3 +326,19 @@ form button:hover {
     color: #fff;
 }
 
+
+/* Shopping */
+#addShoppingArticle {
+    display: flex;
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: stretch;
+    padding-top: 1em;
+}
+#shoppingDesc {
+    flex-grow: 2;
+}
+#shopping span {
+	flex-grow: 2;
+	padding: 0 1em;
+}
