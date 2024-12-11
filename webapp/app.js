@@ -120,14 +120,14 @@ async function fetchTodos() {
         todoItem._data = todo;
         const repeat = (todo.frequency > 0) ? `<em>(every ${todo.frequency} days)</em>` : ''
         todoItem.innerHTML = `
-            <div>
+            <div class="todoContent">
                 <strong>${todo.name}</strong><br>
             ${todo.description} ${repeat}
             </div>
             <div class="duedate ${dueClass}">
                 ${todo.frequency != 0 ? dueDate : ''}
             </div>
-            <div>
+            <div class="todoButtons">
                 <button onclick="markTodoDone(${todo.id})">✅ Done</button>
                 ${!todo.due && todo.frequency != 0 ? `<button onclick="markTodoDue(${todo.id})">🔥 Due now!</button>` : ''}
                 ${todo.due && todo.frequency != 0 ? `<button onclick="postponeTodo(${todo.id})">❎ Postpone</button>` : ''}

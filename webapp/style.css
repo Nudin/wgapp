@@ -45,11 +45,16 @@ h2 {
     border: none;
     outline: none;
     cursor: pointer;
-    padding: 14px 30px;
     margin: 0 5px;
     border-radius: 5px;
     font-size: 17px;
     transition: background-color 0.3s;
+}
+
+@media (min-width: 700px) {
+.tab button {
+    padding: 14px 30px;
+}
 }
 
 .tab button:hover {
@@ -107,6 +112,15 @@ li {
     align-items: center;
 }
 
+#todoList li {
+    justify-content: space-around;
+    flex-wrap: wrap;
+    row-gap: 1em;
+}
+.todoContent {
+    min-width: 50%;
+}
+
 #log-list li * {
 	width: 33%;
 }
@@ -118,6 +132,7 @@ li button {
 .duedate {
     margin-left: auto;
     margin-right: 1em;
+    min-width: 5em;
 }
 .overdue {
     color: red; /* Red color for overdue dates */
@@ -334,6 +349,7 @@ form button:hover {
     align-items: baseline;
     justify-content: stretch;
     padding-top: 1em;
+    flex-wrap: wrap;
 }
 #shoppingDesc {
     flex-grow: 2;
