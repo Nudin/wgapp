@@ -96,16 +96,18 @@ class API {
 }
 api = new API();
 
-function getActiveTag() {
+
+function getActiveFilter(filter) {
     const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get('tag');
+    return urlParams.get(filter);
 }
 
 
 // Fetch Todos from API and display them
 async function fetchTodos() {
     const todos = await api.get('todos/')
-    const tag = getActiveTag()
+    const tag = getActiveFilter("tag")
+    const typefilter = getActiveFilter("type")
     todoList.innerHTML = "";
 
     todos.forEach(todo => {
@@ -113,24 +115,37 @@ async function fetchTodos() {
         if ( tag && !tagArray.includes(tag)) {
             return
         }
+        let type;
+        if ( todo.frequency > 0 ) {
+            type = "repeating"
+        }
+        else if ( todo.frequency == 0 ) {
+            type = "ondemand"
+        }
+        else {
+            type = "onetime"
+        }
+        if ( typefilter && typefilter != type ) {
+            return
+        }
 
         const todoItem = document.createElement('li');
         const dueDate = new Date(todo.next_due_date).toLocaleDateString();
         const dueClass = todo.due ? 'overdue' : '';
         todoItem._data = todo;
-        const repeat = (todo.frequency > 0) ? `<em>(every ${todo.frequency} days)</em>` : ''
+        const repeat = (type == "repeating") ? `<em>(every ${todo.frequency} days)</em>` : ''
         todoItem.innerHTML = `
             <div class="todoContent">
                 <strong>${todo.name}</strong><br>
             ${todo.description} ${repeat}
             </div>
             <div class="duedate ${dueClass}">
-                ${todo.frequency != 0 ? dueDate : ''}
+                ${type != "ondemand" ? dueDate : ''}
             </div>
             <div class="todoButtons">
                 <button onclick="markTodoDone(${todo.id})">✅ Done</button>
-                ${!todo.due && todo.frequency != 0 ? `<button onclick="markTodoDue(${todo.id})">🔥 Due now!</button>` : ''}
-                ${todo.due && todo.frequency != 0 ? `<button onclick="postponeTodo(${todo.id})">❎ Postpone</button>` : ''}
+                ${!todo.due && type != "ondemand" ? `<button onclick="markTodoDue(${todo.id})">🔥 Due now!</button>` : ''}
+                ${todo.due && type != "ondemand" ? `<button onclick="postponeTodo(${todo.id})">❎ Postpone</button>` : ''}
                 <!-- Dropdown container -->
                 <div class="dropdown">
                   <button class="dropdown-toggle" onclick="toggleDropdown(this)">…</button>
@@ -191,6 +206,7 @@ async function fetchStatistics() {
 async function fetchTags() {
     const logs = await api.get("tags")
     createTagButtons(logs);
+    createTypeDropdown();
 }
 
 // Function to fetch statistics and display them
@@ -419,11 +435,45 @@ addShoppingArticle.addEventListener('submit', addArticleToShoppingList);
 
 /*** Tags ***/
 
+function createTypeDropdown() {
+    const container = document.getElementById('typefilter');
+    const types = ["All Types", "Repeating", "Ondemand", "Onetime" ]
+    const activeType = getActiveFilter("type")
+
+    container.innerHTML = '';
+    // Create a dropdown (select element)
+    const dropdown = document.createElement('select');
+    dropdown.className = 'type-dropdown';
+
+    // Populate the dropdown with options
+    types.forEach(type => {
+        const option = document.createElement('option');
+        option.value = type;
+        option.textContent = type;
+
+        // Highlight the active option
+        if (type === activeType) {
+            option.selected = true;
+        }
+
+        dropdown.appendChild(option);
+    });
+
+    // Add event listener for change event
+    dropdown.addEventListener('change', (event) => {
+        handleTypeClick(event.target.value, dropdown);
+    });
+
+    // Append the dropdown to the container
+    container.appendChild(dropdown);
+}
+
+
 function createTagButtons(tagList) {
     const container = document.getElementById('taglist');
 
     // Get currently active tag from the URL
-    const activeTag = getActiveTag()
+    const activeTag = getActiveFilter("tag")
 
     container.innerHTML = '';
 
@@ -451,12 +501,28 @@ function handleTagClick(tag, button) {
     document.querySelectorAll('.tag-button').forEach(btn => btn.classList.remove('active'));
 
     // If filter was already active, deactivate it
-    if (getActiveTag() === tag) {
+    if (getActiveFilter("tag") === tag) {
         urlParams.delete('tag');
     }
     else {
         urlParams.set('tag', tag);
         button.classList.add('active');
+    }
+
+    window.history.pushState({}, '', `${window.location.pathname}?${urlParams}`);
+    fetchTodos();
+}
+
+// Function to handle tag button click
+function handleTypeClick(type, dropdown) {
+    const urlParams = new URLSearchParams(window.location.search);
+    type = type.toLowerCase()
+
+    if (type === "all types") {
+        urlParams.delete('type');
+    }
+    else {
+        urlParams.set('type', type);
     }
 
     window.history.pushState({}, '', `${window.location.pathname}?${urlParams}`);

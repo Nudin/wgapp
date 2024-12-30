@@ -341,6 +341,16 @@ form button:hover {
     color: #fff;
 }
 
+select {
+    border-radius: 20px;
+    padding: 5px 15px;
+    border: 1px solid #ccc;
+    background-color: #f0f0f0;
+    cursor: pointer;
+    color: #000;
+    font-size: 16px;
+}
+
 
 /* Shopping */
 #addShoppingArticle {
