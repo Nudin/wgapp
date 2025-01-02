@@ -74,7 +74,7 @@ def generate_monthly_report(month=None, db=None):
         send_signal_message(
             config.get("signal_account"),
             config.get("signal_group_id"),
-            f"WG-APP-Statistik für letzten Monat: {formatted_stat}",
+            f"WG-APP-Statistik für letzten Monat:\n{formatted_stat}",
         )
 
 
