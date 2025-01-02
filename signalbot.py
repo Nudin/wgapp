@@ -1,5 +1,6 @@
 import subprocess
 import tomllib
+from datetime import date
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
@@ -49,7 +50,7 @@ def generate_user_task_list(stat: dict) -> str:
         username = user_stat["username"]
         task_count = user_stat["task_count"]
         # Add the emoji to the user with the most tasks
-        line = f"{index + 1}. {username}: {task_count} tasks"
+        line = f"{username}: {task_count} tasks"
         if index == 0:  # The first user has the most tasks
             line += f" {top_emoji}"
         result.append(line)
@@ -61,6 +62,11 @@ def generate_monthly_report(month=None, db=None):
     # Replace this logic with your reporting function
     print("Generating monthly report...")
     db = db or next(get_db())
+    current_month = date.today().month
+    if month is None:
+        month = current_month - 1
+        if month == 0:
+            month = 12
     stat = routers.stats._get_monthly_task_statistics(month=month, db=db)
     formatted_stat = generate_user_task_list(stat)
     print(f"Monthly report generated: {formatted_stat}")
