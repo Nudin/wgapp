@@ -52,10 +52,11 @@ def generate_user_task_list(stat: dict) -> str:
     return "\n".join(result)
 
 
-def generate_monthly_report():
+def generate_monthly_report(month=None, db=None):
     # Replace this logic with your reporting function
     print("Generating monthly report...")
-    stat = routers.stats._get_monthly_task_statistics(month=None, db=next(get_db()))
+    db = db or next(get_db())
+    stat = routers.stats._get_monthly_task_statistics(month=month, db=db)
     formatted_stat = generate_user_task_list(stat)
     print(f"Monthly report generated: {formatted_stat}")
     if config.get("signal_account") and config.get("signal_group_id"):
@@ -64,3 +65,14 @@ def generate_monthly_report():
             config.get("signal_group_id"),
             f"WG-APP-Statistik für letzten Monat: {formatted_stat}",
         )
+
+
+router = APIRouter(prefix="/api")
+
+
+@router.get("/send_stats", tags=["logs"])
+def get_task_statistics(
+    _: models.User = Depends(get_current_user), db: Session = Depends(get_db)
+):
+    generate_monthly_report(db=db)
+    return None

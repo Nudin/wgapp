@@ -27,6 +27,7 @@ app.include_router(routers.logs.router)
 app.include_router(routers.stats.router)
 app.include_router(routers.shopping.router)
 app.include_router(routers.router)
+app.include_router(signalbot.router)
 
 
 scheduler = BackgroundScheduler()
