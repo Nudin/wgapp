@@ -118,7 +118,7 @@
         <!-- Modal for Editing Todo -->
         <div id="editModal" class="modal">
             <div class="modal-content">
-                <span class="close" onclick="closeModal('editModal')">&times;</span>
+                <span class="close">&times;</span>
                 <h2>Edit Todo</h2>
                 <form id="editTodoForm">
                     <input type="hidden" id="editId" >
@@ -143,7 +143,7 @@
                     <label for="editArchived">Archived</label>
                     </span>
 
-                    <button type="button" onclick="submitEditTodo()">Save Changes</button>
+                    <button type="button" id="submitEditBtn">Save Changes</button>
                 </form>
             </div>
         </div>
@@ -151,7 +151,7 @@
         <!-- Modal for showing task details -->
         <div id="detailsModal" class="modal">
             <div class="modal-content">
-                <span class="close" onclick="closeModal('detailsModal')">&times;</span>
+                <span class="close">&times;</span>
                 <h2>Details</h2>
                 <div class="content">
                 </div>
@@ -161,7 +161,7 @@
         <!-- Modal for showing task details -->
         <div id="postponeModal" class="modal">
             <div class="modal-content">
-                <span class="close" onclick="closeModal('postponeModal')">&times;</span>
+                <span class="close">&times;</span>
                 <h2>Select a New Date</h2>
                 <input type="date" id="postponeDateInput">
                 <div>

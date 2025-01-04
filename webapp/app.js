@@ -330,6 +330,7 @@ function openEditModal (todoId, name, description, tags, frequency, nextDueDate)
   document.getElementById('editDueDate').value = nextDueDate
   openModal('editModal')
 }
+document.getElementById('submitEditBtn').addEventListener('click', submitEditTodo)
 
 function openPostponeModal (todoId) {
   // Utility to format a date as YYYY-MM-DD
@@ -656,16 +657,19 @@ window.addEventListener('click', function (event) {
 // Close Popup if escape key is pressed
 document.addEventListener('keydown', function (event) {
   if (event.key === 'Escape' || event.keyCode === 27) {
-    // Todo: generalize
-    closeModal('editModal')
-    closeModal('postponeModal')
-    closeModal('detailsModal')
+    document.querySelectorAll('.modal').forEach(modal => {
+      hide(modal)
+    })
   }
 })
 
 // Function to open/close a modal
 function openModal (modalName) {
-  unhide(document.getElementById(modalName))
+  const modal = document.getElementById(modalName)
+  modal.getElementsByClassName('close')[0].onclick = function () {
+    closeModal(modalName)
+  }
+  unhide(modal)
 }
 function closeModal (modalName) {
   hide(document.getElementById(modalName))
