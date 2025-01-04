@@ -1,151 +1,150 @@
 // DOM Elements
-const todoList = document.getElementById('todoList');
-const addTodoForm = document.getElementById('addTodoForm');
-const authSection = document.getElementById('auth-section');
-const mainContent = document.getElementById('main-content');
+const todoList = document.getElementById('todoList')
+const addTodoForm = document.getElementById('addTodoForm')
+const authSection = document.getElementById('auth-section')
+const mainContent = document.getElementById('main-content')
 
-function hide(element) {
-    element.style.display = "none"
-    if(element.disabled !== undefined) {
-        element.disabled = true;
-    }
+function hide (element) {
+  element.style.display = 'none'
+  if (element.disabled !== undefined) {
+    element.disabled = true
+  }
 }
-function unhide(element) {
-    element.style.display = "unset"
-    if(element.disabled !== undefined) {
-        element.disabled = false;
-    }
+function unhide (element) {
+  element.style.display = 'unset'
+  if (element.disabled !== undefined) {
+    element.disabled = false
+  }
 }
 
 // API helper functions
 class API {
-    apiBaseUrl = '/api';  // Adjust the base URL as necessary
-    headers() {
-        return {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
+  apiBaseUrl = '/api' // Adjust the base URL as necessary
+  headers () {
+    return {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('token')}`
+    }
+  }
+
+  async login (username, password) {
+    const response = await fetch('/api/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.detail || 'Incorrect username or password')
     }
 
-    async login(username, password) {
-        const response = await fetch(`/api/token`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
-        });
+    // Store the access token in localStorage
+    const result = await response.json()
+    console.log('Logged in:', result)
+    localStorage.setItem('token', result.access_token)
+  }
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.detail || 'Incorrect username or password');
-        }
+  async get (url) {
+    const response = await fetch(`${this.apiBaseUrl}/${url}`, {
+      headers: this.headers()
+    })
+    if (response.status === 401) {
+      console.log('Token invalid')
+      localStorage.removeItem('token')
+      checkAuth()
+      return {}
+    }
+    return response.json()
+  }
 
-        // Store the access token in localStorage
-        const result = await response.json();
-        console.log('Logged in:', result);
-        localStorage.setItem('token', result.access_token);
+  async put (url, data) {
+    const response = await fetch(`${this.apiBaseUrl}/${url}`, {
+      method: 'PUT',
+      headers: this.headers(),
+      body: JSON.stringify(data)
+    })
+    if (!response.ok) {
+      throw new Error('Network response was not ok')
     }
 
-     async  get(url) {
-        const response = await fetch(`${this.apiBaseUrl}/${url}`, {
-            headers: this.headers()
-        });
-        if (response.status === 401) {
-            console.log("Token invalid")
-            localStorage.removeItem('token');
-            checkAuth();
-            return {};
-        }
-        return response.json();
-    }
-     async put(url, data) {
-        const response = await fetch(`${this.apiBaseUrl}/${url}`, {
-            method: 'PUT',
-            headers: this.headers(),
-            body: JSON.stringify(data),
-        });
-        if (!response.ok) {
-            throw new Error("Network response was not ok");
-        }
+    return await response.json()
+  }
 
-        return await response.json();
+  async post (url, data) {
+    const response = await fetch(`${this.apiBaseUrl}/${url}`, {
+      method: 'POST',
+      headers: this.headers(),
+      body: JSON.stringify(data)
+    })
+    if (!response.ok) {
+      const err = new Error('Network response was not ok')
+      err._data = response.json()
+      throw err
     }
-     async  post(url, data) {
-        const response = await fetch(`${this.apiBaseUrl}/${url}`, {
-            method: "POST",
-            headers: this.headers(),
-            body: JSON.stringify(data),
-        });
-        if (!response.ok) {
-            let err = new Error("Network response was not ok");
-            err._data = response.json();
-            throw err;
-        }
 
-        return await response.json();
+    return await response.json()
+  }
+
+  async delete (url) {
+    const response = await fetch(`${this.apiBaseUrl}/${url}`, {
+      method: 'DELETE',
+      headers: this.headers()
+    })
+    if (!response.ok) {
+      throw new Error('Network response was not ok')
     }
-    async  delete(url) {
-        const response = await fetch(`${this.apiBaseUrl}/${url}`, {
-            method: "DELETE",
-            headers: this.headers()
-        });
-        if (!response.ok) {
-            throw new Error("Network response was not ok");
-        }
-        return response.json();
-    }
+    return response.json()
+  }
 }
-api = new API();
+const api = new API()
 
-
-function getActiveFilter(filter) {
-    const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get(filter);
+function getActiveFilter (filter) {
+  const urlParams = new URLSearchParams(window.location.search)
+  return urlParams.get(filter)
 }
-
 
 // Fetch Todos from API and display them
-async function fetchTodos() {
-    const todos = await api.get('todos/')
-    const tag = getActiveFilter("tag")
-    const typefilter = getActiveFilter("type")
-    todoList.innerHTML = "";
+async function fetchTodos () {
+  const todos = await api.get('todos/')
+  const tag = getActiveFilter('tag')
+  const typefilter = getActiveFilter('type')
+  todoList.innerHTML = ''
 
-    todos.forEach(todo => {
-        const tagArray = todo.tags.split('+');
-        if ( tag && !tagArray.includes(tag)) {
-            return
-        }
-        let type;
-        if ( todo.frequency > 0 ) {
-            type = "repeating"
-        }
-        else if ( todo.frequency == 0 ) {
-            type = "ondemand"
-        }
-        else {
-            type = "onetime"
-        }
-        if ( typefilter && typefilter != type ) {
-            return
-        }
+  todos.forEach(todo => {
+    const tagArray = todo.tags.split('+')
+    if (tag && !tagArray.includes(tag)) {
+      return
+    }
+    let type
+    if (todo.frequency > 0) {
+      type = 'repeating'
+    } else if (todo.frequency == 0) {
+      type = 'ondemand'
+    } else {
+      type = 'onetime'
+    }
+    if (typefilter && typefilter != type) {
+      return
+    }
 
-        const todoItem = document.createElement('li');
-        const dueDate = new Date(todo.next_due_date).toLocaleDateString();
-        const dueClass = todo.due ? 'overdue' : '';
-        todoItem._data = todo;
-        const repeat = (type == "repeating") ? `<em>(every ${todo.frequency} days)</em>` : ''
-        todoItem.innerHTML = `
+    const todoItem = document.createElement('li')
+    const dueDate = new Date(todo.next_due_date).toLocaleDateString()
+    const dueClass = todo.due ? 'overdue' : ''
+    todoItem._data = todo
+    const repeat = (type == 'repeating') ? `<em>(every ${todo.frequency} days)</em>` : ''
+    todoItem.innerHTML = `
             <div class="todoContent">
                 <strong>${todo.name}</strong><br>
             ${todo.description} ${repeat}
             </div>
             <div class="duedate ${dueClass}">
-                ${type != "ondemand" ? dueDate : ''}
+                ${type != 'ondemand' ? dueDate : ''}
             </div>
             <div class="todoButtons">
                 <button onclick="markTodoDone(${todo.id})">✅ Done</button>
-                ${!todo.due && type != "ondemand" ? `<button onclick="markTodoDue(${todo.id})">🔥 Due now!</button>` : ''}
-                ${todo.due && type != "ondemand" ? `<button onclick="postponeTodo(${todo.id})">❎ Postpone</button>` : ''}
+                ${!todo.due && type != 'ondemand' ? `<button onclick="markTodoDue(${todo.id})">🔥 Due now!</button>` : ''}
+                ${todo.due && type != 'ondemand' ? `<button onclick="postponeTodo(${todo.id})">❎ Postpone</button>` : ''}
                 <!-- Dropdown container -->
                 <div class="dropdown">
                   <button class="dropdown-toggle" onclick="toggleDropdown(this)">…</button>
@@ -159,480 +158,472 @@ async function fetchTodos() {
                   </div>
                 </div>
             </div>
-        `;
-        todoList.appendChild(todoItem);
-    });
+        `
+    todoList.appendChild(todoItem)
+  })
 }
 
 // Fetch Logs from API and display them
-async function fetchLogs() {
-    try {
-        const logs = await api.get('logs/');
-        const logList = document.getElementById('log-list');
+async function fetchLogs () {
+  try {
+    const logs = await api.get('logs/')
+    const logList = document.getElementById('log-list')
 
-        logList.innerHTML = '';
-        logs.forEach(log => {
-            const logItem = document.createElement('li');
-            const completionDate = new Date(log.done_date).toLocaleDateString();
+    logList.innerHTML = ''
+    logs.forEach(log => {
+      const logItem = document.createElement('li')
+      const completionDate = new Date(log.done_date).toLocaleDateString()
 
-            logItem.innerHTML = `
+      logItem.innerHTML = `
                 <strong>${log.todo_name}</strong> <span>Completed by: <strong>${log.username}</strong></span> on ${log.done_date}
-            `;
+            `
 
-            logList.appendChild(logItem);
-        });
-    } catch (error) {
-        console.error('Error fetching logs:', error);
-    }
+      logList.appendChild(logItem)
+    })
+  } catch (error) {
+    console.error('Error fetching logs:', error)
+  }
 }
 
 // Function to fetch statistics and display them
-async function fetchStatistics() {
-    try {
-        const stats = await api.get('stats');
-        const statsSection = document.getElementById('stats-section');
-        statsSection.innerHTML = '';  // Clear any previous content
+async function fetchStatistics () {
+  try {
+    const stats = await api.get('stats')
+    const statsSection = document.getElementById('stats-section')
+    statsSection.innerHTML = '' // Clear any previous content
 
-        stats["user_stats"].forEach(stat => {
-            const statItem = document.createElement('li');
-            statItem.innerHTML = `<strong>${stat.username}</strong>: ${stat.task_count} tasks completed`;
-            statsSection.appendChild(statItem);
-        });
-    } catch (error) {
-        console.error('Error fetching statistics:', error);
-    }
+    stats.user_stats.forEach(stat => {
+      const statItem = document.createElement('li')
+      statItem.innerHTML = `<strong>${stat.username}</strong>: ${stat.task_count} tasks completed`
+      statsSection.appendChild(statItem)
+    })
+  } catch (error) {
+    console.error('Error fetching statistics:', error)
+  }
 }
 
-async function fetchTags() {
-    const logs = await api.get("tags")
-    createTagButtons(logs);
-    createTypeDropdown();
+async function fetchTags () {
+  const logs = await api.get('tags')
+  createTagButtons(logs)
+  createTypeDropdown()
 }
 
-// Function to fetch statistics and display them
-async function fetchShopping() {
-    try {
-        const shopping = await api.get('shopping');
-        const shoppingSection = document.getElementById('shopping');
-        shoppingSection.innerHTML = '';  // Clear any previous content
+// Function to fetch and display shopping list
+async function fetchShopping () {
+  try {
+    const shopping = await api.get('shopping')
+    const shoppingSection = document.getElementById('shopping')
+    shoppingSection.innerHTML = '' // Clear any previous content
 
-        shopping.forEach(article => {
-            const articleItem = document.createElement('li');
-            articleItem.innerHTML = `<strong>${article.title}</strong><span>${article.description}</span><button onclick="shoppingDone(${article.id})">✅</button>`;
-            shoppingSection.appendChild(articleItem);
-        });
-    } catch (error) {
-        console.error('Error fetching shopping list:', error);
-    }
+    shopping.forEach(article => {
+      const articleItem = document.createElement('li')
+      articleItem.innerHTML = `<strong>${article.title}</strong><span>${article.description}</span><button onclick="shoppingDone(${article.id})">✅</button>`
+      shoppingSection.appendChild(articleItem)
+    })
+  } catch (error) {
+    console.error('Error fetching shopping list:', error)
+  }
 }
 
-function fetchAll() {
-    fetchTodos();
-    fetchLogs();
-    fetchStatistics();
-    fetchTags()
-    fetchShopping()
+function fetchAll () {
+  fetchTodos()
+  fetchLogs()
+  fetchStatistics()
+  fetchTags()
+  fetchShopping()
 }
 
-/*** Todo core functions ***/
+/** * Todo core functions ***/
 
 // Mark a Todo as Done
-async function markTodoDone(todoId) {
-    await api.put(`todos/${todoId}/done`, {});
-    fetchAll();
+async function markTodoDone (todoId) {
+  await api.put(`todos/${todoId}/done`, {})
+  fetchAll()
 }
-async function markTodoDoneByGuest(todoId) {
-    const username = prompt("Please enter username")
-    await api.put(`todos/${todoId}/done`, {"username": username});
-    fetchAll();
+async function markTodoDoneByGuest (todoId) {
+  const username = prompt('Please enter username')
+  await api.put(`todos/${todoId}/done`, { username })
+  fetchAll()
 }
 
 // Postpone a Todo
-async function postponeTodo(todoId) {
-    const newDueDate = prompt("Please enter the new due date (YYYY-MM-DD):",
-                              new Date().toISOString().split('T')[0]);
-    if (newDueDate) {
-        try {
-            await api.post(`todos/${todoId}/postpone/`, { new_due_date: newDueDate });
-            fetchTodos(); // Refresh the todo list after postponing
-        } catch (error) {
-            alert("Failed to postpone todo. Please try again." + error);
-        }
+async function postponeTodo (todoId) {
+  const newDueDate = prompt('Please enter the new due date (YYYY-MM-DD):',
+    new Date().toISOString().split('T')[0])
+  if (newDueDate) {
+    try {
+      await api.post(`todos/${todoId}/postpone/`, { new_due_date: newDueDate })
+      fetchTodos() // Refresh the todo list after postponing
+    } catch (error) {
+      alert('Failed to postpone todo. Please try again.' + error)
     }
+  }
 }
 
-async function markTodoArchived(todoId) {
-    await api.put(`todos/${todoId}/`, {"archived": true});
-    fetchAll();
+async function markTodoArchived (todoId) {
+  await api.put(`todos/${todoId}/`, { archived: true })
+  fetchAll()
 }
 
-async function markTodoDue(todoId) {
-    await api.put(`todos/${todoId}/due`, null);
-    fetchTodos();
+async function markTodoDue (todoId) {
+  await api.put(`todos/${todoId}/due`, null)
+  fetchTodos()
 }
 
 // Add a new Todo
-async function addNewTodo(e) {
-    e.preventDefault();
-    const newTodo = {
-        name: document.getElementById('todoName').value,
-        description: document.getElementById('todoDescription').value,
-        tags: document.getElementById('todoTags').value,
-        frequency: document.getElementById('todoFrequency').value,
-        next_due_date: document.getElementById('todoNextDueDate').value
-    };
-    if( document.getElementById('radioOnetime').checked == true) {
-        newTodo.frequency = -1;
-    }
-    else if( document.getElementById('radioOnDemand').checked == true) {
-        newTodo.frequency = 0;
-        newTodo.next_due_date = "1970-01-01"
-    }
+async function addNewTodo (e) {
+  e.preventDefault()
+  const newTodo = {
+    name: document.getElementById('todoName').value,
+    description: document.getElementById('todoDescription').value,
+    tags: document.getElementById('todoTags').value,
+    frequency: document.getElementById('todoFrequency').value,
+    next_due_date: document.getElementById('todoNextDueDate').value
+  }
+  if (document.getElementById('radioOnetime').checked == true) {
+    newTodo.frequency = -1
+  } else if (document.getElementById('radioOnDemand').checked == true) {
+    newTodo.frequency = 0
+    newTodo.next_due_date = '1970-01-01'
+  }
 
-    await api.post(`todos/`, newTodo);
+  await api.post('todos/', newTodo)
 
-    // Clear form and refresh todos
-    addTodoForm.reset();
-    fetchTodos();
+  // Clear form and refresh todos
+  addTodoForm.reset()
+  fetchTodos()
 }
-addTodoForm.addEventListener('submit', addNewTodo);
+addTodoForm.addEventListener('submit', addNewTodo)
 
+/** * Details and edit popup ***/
 
-/*** Details and edit popup ***/
+async function showDetails (event) {
+  todo = event.target.closest('li')._data
+  const logs = await api.get('logs/' + todo.id)
+  const stats = await api.get('stats/' + todo.id)
+  const content = document.querySelector('#detailsModal .content')
+  content.innerHTML = ''
 
-async function showDetails(event) {
-    todo = event.target.closest("li")._data
-    const logs = await api.get("logs/" + todo.id)
-    const stats = await api.get("stats/" + todo.id)
-    const content = document.querySelector('#detailsModal .content');
-    content.innerHTML = '';
+  // Create containers for stats and logs
+  const statsContainer = document.createElement('div')
+  const logsContainer = document.createElement('div')
 
-    // Create containers for stats and logs
-    const statsContainer = document.createElement('div');
-    const logsContainer = document.createElement('div');
+  // Append the containers to logList
+  content.appendChild(statsContainer)
+  content.appendChild(logsContainer)
 
-    // Append the containers to logList
-    content.appendChild(statsContainer);
-    content.appendChild(logsContainer);
+  stats.user_stats.forEach(stat => {
+    const statItem = document.createElement('li')
+    statItem.innerHTML = `<strong>${stat.username}</strong>: ${stat.task_count} tasks completed`
+    statsContainer.appendChild(statItem)
+  })
+  logs.forEach(log => {
+    const logItem = document.createElement('li')
+    const completionDate = new Date(log.done_date).toLocaleDateString()
 
-    stats["user_stats"].forEach(stat => {
-        const statItem = document.createElement('li');
-        statItem.innerHTML = `<strong>${stat.username}</strong>: ${stat.task_count} tasks completed`;
-        statsContainer.appendChild(statItem);
-    });
-    logs.forEach(log => {
-        const logItem = document.createElement('li');
-        const completionDate = new Date(log.done_date).toLocaleDateString();
+    logItem.innerHTML = `${log.done_date}:&nbsp;<strong>${log.username}</strong>`
 
-        logItem.innerHTML = `${log.done_date}:&nbsp;<strong>${log.username}</strong>`;
+    logsContainer.appendChild(logItem)
+  })
 
-        logsContainer.appendChild(logItem);
-    });
-
-    openModal('detailsModal');
+  openModal('detailsModal')
 }
 
 // Function to open the modal with the current todo's data
-function openEditModal(todoId, name, description, tags, frequency, nextDueDate) {
-    document.getElementById('editId').value = todoId;
-    document.getElementById('editName').value = name;
-    document.getElementById('editDescription').value = description;
-    document.getElementById('editTags').value = tags;
-    document.getElementById('editFrequency').value = frequency;
-    document.getElementById('editDueDate').value = nextDueDate;
-    openModal('editModal')
+function openEditModal (todoId, name, description, tags, frequency, nextDueDate) {
+  document.getElementById('editId').value = todoId
+  document.getElementById('editName').value = name
+  document.getElementById('editDescription').value = description
+  document.getElementById('editTags').value = tags
+  document.getElementById('editFrequency').value = frequency
+  document.getElementById('editDueDate').value = nextDueDate
+  openModal('editModal')
 }
 
 // Function to submit the edited todo
-async function submitEditTodo() {
-    const name = document.getElementById('editName').value;
-    const description = document.getElementById('editDescription').value;
-    const tags = document.getElementById('editTags').value;
-    const frequency = document.getElementById('editFrequency').value;
-    const nextDueDate = document.getElementById('editDueDate').value;
-    const archived = document.getElementById('editArchived').checked;
-    const id = document.getElementById('editId').value;
+async function submitEditTodo () {
+  const name = document.getElementById('editName').value
+  const description = document.getElementById('editDescription').value
+  const tags = document.getElementById('editTags').value
+  const frequency = document.getElementById('editFrequency').value
+  const nextDueDate = document.getElementById('editDueDate').value
+  const archived = document.getElementById('editArchived').checked
+  const id = document.getElementById('editId').value
 
-    // Create an object to hold the updates
-    const updates = {};
-    if (name) updates.name = name;
-    if (description) updates.description = description;
-    if (tags) updates.tags = tags;
-    if (frequency) updates.frequency = parseInt(frequency, 10);
-    if (nextDueDate) updates.next_due_date = nextDueDate;
-    updates.archived = archived;
+  // Create an object to hold the updates
+  const updates = {}
+  if (name) updates.name = name
+  if (description) updates.description = description
+  if (tags) updates.tags = tags
+  if (frequency) updates.frequency = parseInt(frequency, 10)
+  if (nextDueDate) updates.next_due_date = nextDueDate
+  updates.archived = archived
 
-    try {
-        await api.put(`todos/${id}/`, updates);
-        closeModal('editModal');
-        fetchTodos(); // Refresh the todo list after updating
-    } catch (error) {
-        alert("Failed to update todo. Please try again. " + error);
-    }
+  try {
+    await api.put(`todos/${id}/`, updates)
+    closeModal('editModal')
+    fetchTodos() // Refresh the todo list after updating
+  } catch (error) {
+    alert('Failed to update todo. Please try again. ' + error)
+  }
 }
 
 // Function to open the edit modal when the "Edit" button is clicked
-function editTodoButton(event) {
-    todo = event.target.closest("li")._data
-    openEditModal(todo.id, todo.name, todo.description, todo.tags, todo.frequency, todo.next_due_date);
+function editTodoButton (event) {
+  todo = event.target.closest('li')._data
+  openEditModal(todo.id, todo.name, todo.description, todo.tags, todo.frequency, todo.next_due_date)
 }
 
-
-/*** UI Elements ***/
+/** * UI Elements ***/
 
 // Tab Management
-function openTab(evt, tabName) {
-    const tabcontent = document.getElementsByClassName("tabcontent");
-    for (let i = 0; i < tabcontent.length; i++) {
-        tabcontent[i].classList.remove("active");
-    }
+function openTab (evt, tabName) {
+  const tabcontent = document.getElementsByClassName('tabcontent')
+  for (let i = 0; i < tabcontent.length; i++) {
+    tabcontent[i].classList.remove('active')
+  }
 
-    const tablinks = document.getElementsByClassName("tablinks");
-    for (let i = 0; i < tablinks.length; i++) {
-        tablinks[i].classList.remove("active");
-    }
+  const tablinks = document.getElementsByClassName('tablinks')
+  for (let i = 0; i < tablinks.length; i++) {
+    tablinks[i].classList.remove('active')
+  }
 
-    document.getElementById(tabName).classList.add("active");
-    evt.currentTarget.classList.add("active");
+  document.getElementById(tabName).classList.add('active')
+  evt.currentTarget.classList.add('active')
 }
 
 // On page "Add todo" hide irrelevant fields
 document.querySelectorAll('input[name="typeRadio"]').forEach(radio => {
-    radio.addEventListener('change', () => {
-      // React to the change event
-      if (radio.id === 'radioRecurring') {
-        unhide(document.getElementById('todoFrequency'));
-        unhide(document.getElementById('todoNextDueDate'));
-      } else if (radio.id === 'radioOnetime') {
-        hide(document.getElementById('todoFrequency'));
-        unhide(document.getElementById('todoNextDueDate'));
-      } else if (radio.id === 'radioOnDemand') {
-        hide(document.getElementById('todoFrequency'));
-        hide(document.getElementById('todoNextDueDate'));
-      }
-    });
-});
+  radio.addEventListener('change', () => {
+    // React to the change event
+    if (radio.id === 'radioRecurring') {
+      unhide(document.getElementById('todoFrequency'))
+      unhide(document.getElementById('todoNextDueDate'))
+    } else if (radio.id === 'radioOnetime') {
+      hide(document.getElementById('todoFrequency'))
+      unhide(document.getElementById('todoNextDueDate'))
+    } else if (radio.id === 'radioOnDemand') {
+      hide(document.getElementById('todoFrequency'))
+      hide(document.getElementById('todoNextDueDate'))
+    }
+  })
+})
 
-/*** Shopping ***/
-async function addArticleToShoppingList(e) {
-    e.preventDefault();
-    const article = {
-        title: document.getElementById('shoppingArticle').value,
-        description: document.getElementById('shoppingDesc').value,
-    };
-    await api.post(`shopping/`, article);
+/** * Shopping ***/
+async function addArticleToShoppingList (e) {
+  e.preventDefault()
+  const article = {
+    title: document.getElementById('shoppingArticle').value,
+    description: document.getElementById('shoppingDesc').value
+  }
+  await api.post('shopping/', article)
 
-    // Clear form and refresh todos
-    addShoppingArticle.reset();
-    fetchShopping();
+  // Clear form and refresh todos
+  addShoppingArticle.reset()
+  fetchShopping()
 }
-async function shoppingDone(articleId) {
-    console.log(articleId)
-    await api.delete(`shopping/${articleId}`)
-    fetchShopping();
+async function shoppingDone (articleId) {
+  console.log(articleId)
+  await api.delete(`shopping/${articleId}`)
+  fetchShopping()
 }
-addShoppingArticle.addEventListener('submit', addArticleToShoppingList);
+addShoppingArticle.addEventListener('submit', addArticleToShoppingList)
 
-/*** Tags ***/
+/** * Tags ***/
 
-function createTypeDropdown() {
-    const container = document.getElementById('typefilter');
-    const types = ["All Types", "Repeating", "Ondemand", "Onetime" ]
-    const activeType = getActiveFilter("type")
+function createTypeDropdown () {
+  const container = document.getElementById('typefilter')
+  const types = ['All Types', 'Repeating', 'Ondemand', 'Onetime']
+  const activeType = getActiveFilter('type')
 
-    container.innerHTML = '';
-    // Create a dropdown (select element)
-    const dropdown = document.createElement('select');
-    dropdown.className = 'type-dropdown';
+  container.innerHTML = ''
+  // Create a dropdown (select element)
+  const dropdown = document.createElement('select')
+  dropdown.className = 'type-dropdown'
 
-    // Populate the dropdown with options
-    types.forEach(type => {
-        const option = document.createElement('option');
-        option.value = type;
-        option.textContent = type;
+  // Populate the dropdown with options
+  types.forEach(type => {
+    const option = document.createElement('option')
+    option.value = type
+    option.textContent = type
 
-        // Highlight the active option
-        if (type === activeType) {
-            option.selected = true;
-        }
+    // Highlight the active option
+    if (type === activeType) {
+      option.selected = true
+    }
 
-        dropdown.appendChild(option);
-    });
+    dropdown.appendChild(option)
+  })
 
-    // Add event listener for change event
-    dropdown.addEventListener('change', (event) => {
-        handleTypeClick(event.target.value, dropdown);
-    });
+  // Add event listener for change event
+  dropdown.addEventListener('change', (event) => {
+    handleTypeClick(event.target.value, dropdown)
+  })
 
-    // Append the dropdown to the container
-    container.appendChild(dropdown);
+  // Append the dropdown to the container
+  container.appendChild(dropdown)
 }
 
+function createTagButtons (tagList) {
+  const container = document.getElementById('taglist')
 
-function createTagButtons(tagList) {
-    const container = document.getElementById('taglist');
+  // Get currently active tag from the URL
+  const activeTag = getActiveFilter('tag')
 
-    // Get currently active tag from the URL
-    const activeTag = getActiveFilter("tag")
+  container.innerHTML = ''
 
-    container.innerHTML = '';
+  tagList.forEach(tag => {
+    const button = document.createElement('button')
+    button.textContent = tag
+    button.className = 'tag-button'
 
-    tagList.forEach(tag => {
-        const button = document.createElement('button');
-        button.textContent = tag;
-        button.className = 'tag-button';
+    // Highlight the active button
+    if (tag === activeTag) {
+      button.classList.add('active')
+    }
 
-        // Highlight the active button
-        if (tag === activeTag) {
-            button.classList.add('active');
-        }
+    button.addEventListener('click', () => handleTagClick(tag, button))
 
-        button.addEventListener('click', () => handleTagClick(tag, button));
-
-        container.appendChild(button);
-    });
+    container.appendChild(button)
+  })
 }
 
 // Function to handle tag button click
-function handleTagClick(tag, button) {
-    const urlParams = new URLSearchParams(window.location.search);
+function handleTagClick (tag, button) {
+  const urlParams = new URLSearchParams(window.location.search)
 
-    // Reset button styles
-    document.querySelectorAll('.tag-button').forEach(btn => btn.classList.remove('active'));
+  // Reset button styles
+  document.querySelectorAll('.tag-button').forEach(btn => btn.classList.remove('active'))
 
-    // If filter was already active, deactivate it
-    if (getActiveFilter("tag") === tag) {
-        urlParams.delete('tag');
-    }
-    else {
-        urlParams.set('tag', tag);
-        button.classList.add('active');
-    }
+  // If filter was already active, deactivate it
+  if (getActiveFilter('tag') === tag) {
+    urlParams.delete('tag')
+  } else {
+    urlParams.set('tag', tag)
+    button.classList.add('active')
+  }
 
-    window.history.pushState({}, '', `${window.location.pathname}?${urlParams}`);
-    fetchTodos();
+  window.history.pushState({}, '', `${window.location.pathname}?${urlParams}`)
+  fetchTodos()
 }
 
 // Function to handle tag button click
-function handleTypeClick(type, dropdown) {
-    const urlParams = new URLSearchParams(window.location.search);
-    type = type.toLowerCase()
+function handleTypeClick (type, dropdown) {
+  const urlParams = new URLSearchParams(window.location.search)
+  type = type.toLowerCase()
 
-    if (type === "all types") {
-        urlParams.delete('type');
-    }
-    else {
-        urlParams.set('type', type);
-    }
+  if (type === 'all types') {
+    urlParams.delete('type')
+  } else {
+    urlParams.set('type', type)
+  }
 
-    window.history.pushState({}, '', `${window.location.pathname}?${urlParams}`);
-    fetchTodos();
+  window.history.pushState({}, '', `${window.location.pathname}?${urlParams}`)
+  fetchTodos()
 }
 
-
-/*** Login/Registration ***/
+/** * Login/Registration ***/
 
 // Check if the user is logged in (by looking for a token)
-function checkAuth() {
-    const token = localStorage.getItem('token');
-    if (token) {
-        // User is logged in
-        hide(authSection);
-        unhide(mainContent);
-        fetchAll();
-    } else {
-        // User is not logged in
-        unhide(authSection);
-        hide(mainContent);
-    }
+function checkAuth () {
+  const token = localStorage.getItem('token')
+  if (token) {
+    // User is logged in
+    hide(authSection)
+    unhide(mainContent)
+    fetchAll()
+  } else {
+    // User is not logged in
+    unhide(authSection)
+    hide(mainContent)
+  }
 }
 
-async function checkRegistation() {
-    const info = await api.get('info/')
-    if ( ! info["registation_open"] ) {
-        hide(document.querySelector("#register-block"))
-    }
+async function checkRegistation () {
+  const info = await api.get('info/')
+  if (!info.registation_open) {
+    hide(document.querySelector('#register-block'))
+  }
 }
 // Function to display login-error messages
-function showError(message) {
-    const errorMessageElement = document.getElementById('error-message');
-    if (message) {
-        errorMessageElement.textContent = message;
-        unhide(errorMessageElement);
-    } else {
-        hide(errorMessageElement);
-    }
+function showError (message) {
+  const errorMessageElement = document.getElementById('error-message')
+  if (message) {
+    errorMessageElement.textContent = message
+    unhide(errorMessageElement)
+  } else {
+    hide(errorMessageElement)
+  }
 }
 
-async function register(event) {
-    event.preventDefault();
-    const username = document.getElementById('register-username').value;
-    const password = document.getElementById('register-password').value;
+async function register (event) {
+  event.preventDefault()
+  const username = document.getElementById('register-username').value
+  const password = document.getElementById('register-password').value
 
-    try {
-        const result = await api.post(`register`, { username, password });
-        console.log('User registered:', result);
-        showError(''); // Clear any previous error
-        // TODO: Log the user in or show success
-    } catch (error) {
-        const reason = error._data || "Unknown error";
-        showError(`Registration failed: ${error._data}`);
-    }
+  try {
+    const result = await api.post('register', { username, password })
+    console.log('User registered:', result)
+    showError('') // Clear any previous error
+    // TODO: Log the user in or show success
+  } catch (error) {
+    const reason = error._data || 'Unknown error'
+    showError(`Registration failed: ${error._data}`)
+  }
 }
 
-async function login(event) {
-    event.preventDefault();
-    const username = document.getElementById('login-username').value;
-    const password = document.getElementById('login-password').value;
+async function login (event) {
+  event.preventDefault()
+  const username = document.getElementById('login-username').value
+  const password = document.getElementById('login-password').value
 
-    try {
-        await api.login(username, password);
-        showError(''); // Clear any previous error
-        checkAuth();   // Proceed to the main content
-    } catch (error) {
-        showError(`Login failed: ${error.message}`);
-    }
+  try {
+    await api.login(username, password)
+    showError('') // Clear any previous error
+    checkAuth() // Proceed to the main content
+  } catch (error) {
+    showError(`Login failed: ${error.message}`)
+  }
 }
-document.getElementById('register-form').addEventListener('submit', register);
-document.getElementById('login-form').addEventListener('submit', login);
+document.getElementById('register-form').addEventListener('submit', register)
+document.getElementById('login-form').addEventListener('submit', login)
 
+/** * Popup and dropdown handling ***/
 
-/*** Popup and dropdown handling ***/
-
-function toggleDropdown(element) {
-  const dropdownMenu = element.nextElementSibling;
-  dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
+function toggleDropdown (element) {
+  const dropdownMenu = element.nextElementSibling
+  dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block'
 }
 
 // Close the dropdown when clicking outside of it
-window.addEventListener('click', function(event) {
+window.addEventListener('click', function (event) {
   if (!event.target.matches('.dropdown-toggle')) {
-    const dropdowns = document.getElementsByClassName('dropdown-menu');
+    const dropdowns = document.getElementsByClassName('dropdown-menu')
     for (let i = 0; i < dropdowns.length; i++) {
-      hide(dropdowns[i]);
+      hide(dropdowns[i])
     }
   }
-});
+})
 
 // Close Popup if escape key is pressed
-document.addEventListener('keydown', function(event) {
+document.addEventListener('keydown', function (event) {
   if (event.key === 'Escape' || event.keyCode === 27) {
     // Todo: generalize
     closeModal('editModal')
     closeModal('detailsModal')
   }
-});
+})
 
 // Function to open/close a modal
-function openModal(modalName) {
-    unhide(document.getElementById(modalName));
+function openModal (modalName) {
+  unhide(document.getElementById(modalName))
 }
-function closeModal(modalName) {
-    hide(document.getElementById(modalName));
+function closeModal (modalName) {
+  hide(document.getElementById(modalName))
 }
 
 // Function to initialize the page
 window.onload = function () {
-    checkAuth();
-    checkRegistation();
-};
+  checkAuth()
+  checkRegistation()
+}
