@@ -248,16 +248,7 @@ async function markTodoDoneByGuest (todoId) {
 
 // Postpone a Todo
 async function postponeTodo (todoId) {
-  const newDueDate = prompt('Please enter the new due date (YYYY-MM-DD):',
-    new Date().toISOString().split('T')[0])
-  if (newDueDate) {
-    try {
-      await api.post(`todos/${todoId}/postpone/`, { new_due_date: newDueDate })
-      fetchTodos() // Refresh the todo list after postponing
-    } catch (error) {
-      alert('Failed to postpone todo. Please try again.' + error)
-    }
-  }
+  openPostponeModal(todoId)
 }
 
 async function markTodoArchived (todoId) {
@@ -338,6 +329,63 @@ function openEditModal (todoId, name, description, tags, frequency, nextDueDate)
   document.getElementById('editFrequency').value = frequency
   document.getElementById('editDueDate').value = nextDueDate
   openModal('editModal')
+}
+
+function openPostponeModal (todoId) {
+  // Utility to format a date as YYYY-MM-DD
+  function formatDate (date) {
+    return date.toISOString().split('T')[0]
+  }
+
+  // Set default and predefined dates
+  const tomorrow = new Date()
+  tomorrow.setDate(tomorrow.getDate() + 1)
+
+  const nextWeek = new Date()
+  nextWeek.setDate(nextWeek.getDate() + 7)
+
+  const inTwoWeeks = new Date()
+  inTwoWeeks.setDate(inTwoWeeks.getDate() + 14)
+
+  const nextMonth = new Date()
+  nextMonth.setMonth(nextMonth.getMonth() + 1)
+
+  const dateInput = document.getElementById('postponeDateInput')
+
+  // Initialize date input
+  dateInput.value = formatDate(tomorrow)
+
+  document.getElementById('btnTomorrow').addEventListener('click', () => {
+    dateInput.value = formatDate(tomorrow)
+  })
+
+  document.getElementById('btnNextWeek').addEventListener('click', () => {
+    dateInput.value = formatDate(nextWeek)
+  })
+
+  document.getElementById('btnInTwoWeeks').addEventListener('click', () => {
+    dateInput.value = formatDate(inTwoWeeks)
+  })
+
+  document.getElementById('btnNextMonth').addEventListener('click', () => {
+    dateInput.value = formatDate(nextMonth)
+  })
+  openModal('postponeModal')
+
+  async function save () {
+    const newDueDate = dateInput.value
+    if (newDueDate) {
+      try {
+        await api.post(`todos/${todoId}/postpone/`, { new_due_date: newDueDate })
+        fetchTodos() // Refresh the todo list after postponing
+      } catch (error) {
+        alert('Failed to postpone todo. Please try again.' + error)
+      }
+    }
+    document.getElementById('savePostponeBtn').removeEventListener('click', save)
+    closeModal('postponeModal')
+  }
+  document.getElementById('savePostponeBtn').addEventListener('click', save)
 }
 
 // Function to submit the edited todo
@@ -610,6 +658,7 @@ document.addEventListener('keydown', function (event) {
   if (event.key === 'Escape' || event.keyCode === 27) {
     // Todo: generalize
     closeModal('editModal')
+    closeModal('postponeModal')
     closeModal('detailsModal')
   }
 })
