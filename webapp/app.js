@@ -45,6 +45,11 @@ class API {
     localStorage.setItem('token', result.access_token)
   }
 
+  async logout () {
+    localStorage.removeItem('token')
+    checkAuth()
+  }
+
   async get (url) {
     const response = await fetch(`${this.apiBaseUrl}/${url}`, {
       headers: this.headers()
@@ -634,8 +639,13 @@ async function login (event) {
     showError(`Login failed: ${error.message}`)
   }
 }
+async function logout () {
+  await api.logout()
+  checkAuth()
+}
 document.getElementById('register-form').addEventListener('submit', register)
 document.getElementById('login-form').addEventListener('submit', login)
+document.getElementById('logoutBtn').addEventListener('click', logout)
 
 /** * Popup and dropdown handling ***/
 

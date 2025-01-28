@@ -368,3 +368,17 @@ select {
 	flex-grow: 2;
 	padding: 0 1em;
 }
+
+/* Logout & notification */
+#user-info {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+#user-info button {
+  background-color: #888;
+}
+#user-info button:hover {
+  background-color: black;
+  color: #eee;
+}
