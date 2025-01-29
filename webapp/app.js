@@ -1,3 +1,4 @@
+/* global localStorage */
 // DOM Elements
 const todoList = document.getElementById('todoList')
 const addTodoForm = document.getElementById('addTodoForm')
@@ -124,12 +125,12 @@ async function fetchTodos () {
     let type
     if (todo.frequency > 0) {
       type = 'repeating'
-    } else if (todo.frequency == 0) {
+    } else if (todo.frequency === 0) {
       type = 'ondemand'
     } else {
       type = 'onetime'
     }
-    if (typefilter && typefilter != type) {
+    if (typefilter && typefilter !== type) {
       return
     }
 
@@ -137,19 +138,19 @@ async function fetchTodos () {
     const dueDate = new Date(todo.next_due_date).toLocaleDateString()
     const dueClass = todo.due ? 'overdue' : ''
     todoItem._data = todo
-    const repeat = (type == 'repeating') ? `<em>(every ${todo.frequency} days)</em>` : ''
+    const repeat = (type === 'repeating') ? `<em>(every ${todo.frequency} days)</em>` : ''
     todoItem.innerHTML = `
             <div class="todoContent">
                 <strong>${todo.name}</strong><br>
             ${todo.description} ${repeat}
             </div>
             <div class="duedate ${dueClass}">
-                ${type != 'ondemand' ? dueDate : ''}
+                ${type !== 'ondemand' ? dueDate : ''}
             </div>
             <div class="todoButtons">
                 <button onclick="markTodoDone(${todo.id})">✅ Done</button>
-                ${!todo.due && type != 'ondemand' ? `<button onclick="markTodoDue(${todo.id})">🔥 Due now!</button>` : ''}
-                ${todo.due && type != 'ondemand' ? `<button onclick="postponeTodo(${todo.id})">❎ Postpone</button>` : ''}
+                ${!todo.due && type !== 'ondemand' ? `<button onclick="markTodoDue(${todo.id})">🔥 Due now!</button>` : ''}
+                ${todo.due && type !== 'ondemand' ? `<button onclick="postponeTodo(${todo.id})">❎ Postpone</button>` : ''}
                 <!-- Dropdown container -->
                 <div class="dropdown">
                   <button class="dropdown-toggle" onclick="toggleDropdown(this)">…</button>
@@ -180,7 +181,7 @@ async function fetchLogs () {
       const completionDate = new Date(log.done_date).toLocaleDateString()
 
       logItem.innerHTML = `
-                <strong>${log.todo_name}</strong> <span>Completed by: <strong>${log.username}</strong></span> on ${log.done_date}
+                <strong>${log.todo_name}</strong> <span>Completed by: <strong>${log.username}</strong></span> on ${completionDate}
             `
 
       logList.appendChild(logItem)
@@ -246,7 +247,7 @@ async function markTodoDone (todoId) {
   fetchAll()
 }
 async function markTodoDoneByGuest (todoId) {
-  const username = prompt('Please enter username')
+  const username = window.prompt('Please enter username')
   await api.put(`todos/${todoId}/done`, { username })
   fetchAll()
 }
@@ -276,9 +277,9 @@ async function addNewTodo (e) {
     frequency: document.getElementById('todoFrequency').value,
     next_due_date: document.getElementById('todoNextDueDate').value
   }
-  if (document.getElementById('radioOnetime').checked == true) {
+  if (document.getElementById('radioOnetime').checked === true) {
     newTodo.frequency = -1
-  } else if (document.getElementById('radioOnDemand').checked == true) {
+  } else if (document.getElementById('radioOnDemand').checked === true) {
     newTodo.frequency = 0
     newTodo.next_due_date = '1970-01-01'
   }
@@ -294,7 +295,7 @@ addTodoForm.addEventListener('submit', addNewTodo)
 /** * Details and edit popup ***/
 
 async function showDetails (event) {
-  todo = event.target.closest('li')._data
+  const todo = event.target.closest('li')._data
   const logs = await api.get('logs/' + todo.id)
   const stats = await api.get('stats/' + todo.id)
   const content = document.querySelector('#detailsModal .content')
@@ -317,7 +318,7 @@ async function showDetails (event) {
     const logItem = document.createElement('li')
     const completionDate = new Date(log.done_date).toLocaleDateString()
 
-    logItem.innerHTML = `${log.done_date}:&nbsp;<strong>${log.username}</strong>`
+    logItem.innerHTML = `${completionDate}:&nbsp;<strong>${log.username}</strong>`
 
     logsContainer.appendChild(logItem)
   })
@@ -385,7 +386,7 @@ function openPostponeModal (todoId) {
         await api.post(`todos/${todoId}/postpone/`, { new_due_date: newDueDate })
         fetchTodos() // Refresh the todo list after postponing
       } catch (error) {
-        alert('Failed to postpone todo. Please try again.' + error)
+        window.alert('Failed to postpone todo. Please try again.' + error)
       }
     }
     document.getElementById('savePostponeBtn').removeEventListener('click', save)
@@ -418,13 +419,13 @@ async function submitEditTodo () {
     closeModal('editModal')
     fetchTodos() // Refresh the todo list after updating
   } catch (error) {
-    alert('Failed to update todo. Please try again. ' + error)
+    window.alert('Failed to update todo. Please try again. ' + error)
   }
 }
 
 // Function to open the edit modal when the "Edit" button is clicked
 function editTodoButton (event) {
-  todo = event.target.closest('li')._data
+  const todo = event.target.closest('li')._data
   openEditModal(todo.id, todo.name, todo.description, todo.tags, todo.frequency, todo.next_due_date)
 }
 
@@ -464,6 +465,7 @@ document.querySelectorAll('input[name="typeRadio"]').forEach(radio => {
 })
 
 /** * Shopping ***/
+const addShoppingArticle = document.getElementById('addShoppingArticle')
 async function addArticleToShoppingList (e) {
   e.preventDefault()
   const article = {
@@ -622,7 +624,7 @@ async function register (event) {
     // TODO: Log the user in or show success
   } catch (error) {
     const reason = error._data || 'Unknown error'
-    showError(`Registration failed: ${error._data}`)
+    showError(`Registration failed: ${reason}`)
   }
 }
 
