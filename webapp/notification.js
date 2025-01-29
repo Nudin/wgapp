@@ -29,9 +29,9 @@ function updateBtn () {
   }
 
   if (isSubscribed) {
-    pushButton.textContent = 'Disable Push Messaging'
+    pushButton.textContent = '🔕'
   } else {
-    pushButton.textContent = 'Enable Push Messaging'
+    pushButton.textContent = '🔔'
   }
 
   pushButton.disabled = false
