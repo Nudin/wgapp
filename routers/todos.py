@@ -1,13 +1,13 @@
 from datetime import date
 
+import models
+import schemas
+from database import get_db
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import asc
 from sqlalchemy.orm import Session
 
-import models
-import schemas
 from auth import get_current_user
-from database import get_db
 
 router = APIRouter(prefix="/api")
 
@@ -129,14 +129,12 @@ def postpone_todo(
 
 
 # List all todos
-@router.get("/todos/", response_model=list[schemas.TodoResponse], tags=["todos"])
-def read_todos(
+def _get_todos(
     skip: int = 0,
     limit: int = 100,
     archived: bool = False,
     tag: str = "",
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user),
 ):
     search = f"%{tag}%"
     todos = (
@@ -166,3 +164,15 @@ def read_todos(
         )
 
     return result
+
+
+@router.get("/todos/", response_model=list[schemas.TodoResponse], tags=["todos"])
+def read_todos(
+    skip: int = 0,
+    limit: int = 100,
+    archived: bool = False,
+    tag: str = "",
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    return _get_todos(skip, limit, archived, tag, db)

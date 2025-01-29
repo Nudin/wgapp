@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 import models
+import notification
 import routers
 import routers.auth
 import routers.logs
@@ -28,6 +29,7 @@ app.include_router(routers.stats.router)
 app.include_router(routers.shopping.router)
 app.include_router(routers.router)
 app.include_router(signalbot.router)
+app.include_router(notification.router)
 
 
 scheduler = BackgroundScheduler()
@@ -44,6 +46,11 @@ async def startup_event():
         trigger,
         id="monthly_report",
         replace_existing=True,
+    )
+    scheduler.add_job(
+        notification.scheduled_notification,
+        "cron",
+        hour="12",
     )
 
 
