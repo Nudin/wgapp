@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Optional
+from typing import Dict, Optional
 
 from pydantic import BaseModel
 
@@ -89,3 +89,9 @@ class ShoppingResponse(BaseModel):
 
 class ShoppingMarkDone(BaseModel):
     id: int
+
+
+class SubscriptionCreate(BaseModel):
+    endpoint: str
+    expirationTime: Optional[str] = None
+    keys: Dict[str, str]

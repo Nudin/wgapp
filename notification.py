@@ -17,6 +17,7 @@ import models
 import routers.stats
 from auth import get_current_user
 from database import get_db
+from schemas import SubscriptionCreate
 
 with open("config.toml", "rb") as f:
     config = tomllib.load(f)
@@ -32,8 +33,6 @@ VAPID_PUBLIC_KEY = (
 )
 
 VAPID_CLAIMS = {"sub": "mailto:michi4@schoenitzer.de"}
-
-subscriptions = []  # TODO: Move to database
 
 
 def send_web_push(subscription_information, message_body):
@@ -51,8 +50,9 @@ def send_web_push(subscription_information, message_body):
 
 
 def scheduled_notification():
-    print(f"Sending scheduled notification to {len(subscriptions)} subscribers")
     db = next(get_db())
+    subscriptions = db.query(models.Subscription).all()
+    print(f"Sending scheduled notification to {len(subscriptions)} subscribers")
     all_todos = routers.todos._get_todos(db=db)
     due_todos = [todo for todo in all_todos if todo["next_due_date"] == date.today()]
     if not due_todos:
@@ -60,7 +60,12 @@ def scheduled_notification():
     message = "New tasks due today:\n" + "\n".join([todo["name"] for todo in due_todos])
     for subscription in subscriptions:
         try:
-            send_web_push(subscription, message)
+            subscription_dict = {
+                "endpoint": subscription.endpoint,
+                "expirationTime": subscription.expiration_time,
+                "keys": subscription.keys,
+            }
+            send_web_push(subscription_dict, message)
         except Exception as e:
             logging.error(f"Failed to send scheduled notification: {e}")
 
@@ -77,13 +82,14 @@ async def get_subscription():
 
 
 @router.post("/subscription/", tags=["subscription"])
-async def create_subscription(request: Request):
+async def create_subscription(sub: SubscriptionCreate, db: Session = Depends(get_db)):
     try:
-        body = await request.json()
-        subscription_token = body.get("subscription_token")
-        if not subscription_token:
-            raise HTTPException(status_code=400, detail="Missing subscription_token")
-        subscriptions.append(subscription_token)
+        new_sub = models.Subscription(
+            endpoint=sub.endpoint, expiration_time=sub.expirationTime, keys=sub.keys
+        )
+        db.add(new_sub)
+        db.commit()
+        db.refresh(new_sub)
         return Response(status_code=201, media_type="application/json")
     except Exception as e:
         logging.error(f"Error in subscription: {e}")
@@ -91,14 +97,15 @@ async def create_subscription(request: Request):
 
 
 @router.delete("/subscription/", tags=["subscription"])
-async def delete_subscription(request: Request):
-    try:
-        body = await request.json()
-        subscription_token = body.get("subscription_token")
-        if not subscription_token:
-            raise HTTPException(status_code=400, detail="Missing subscription_token")
-        subscriptions.remove(subscription_token)
-        return Response(status_code=204)
-    except Exception as e:
-        logging.error(f"Error in subscription: {e}")
-        raise HTTPException(status_code=500, detail="Internal Server Error")
+def delete_subscription(sub: SubscriptionCreate, db: Session = Depends(get_db)):
+    existing_sub = (
+        db.query(models.Subscription)
+        .filter(models.Subscription.endpoint == sub.endpoint)
+        .first()
+    )
+    if not existing_sub:
+        raise HTTPException(status_code=404, detail="Subscription not found")
+
+    db.delete(existing_sub)
+    db.commit()
+    return {"message": "Subscription deleted successfully"}

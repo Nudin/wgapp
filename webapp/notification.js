@@ -45,7 +45,7 @@ function updateSubscriptionOnServer (subscription, isSubscribed) {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ subscription_token: subscription })
+      body: JSON.stringify(subscription)
     })
       .then(response => {
         if (!response.ok) {
@@ -62,7 +62,7 @@ function updateSubscriptionOnServer (subscription, isSubscribed) {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ subscription_token: subscription })
+      body: JSON.stringify(subscription)
     })
       .then(response => {
         if (!response.ok) {

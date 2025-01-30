@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 
-from sqlalchemy import Boolean, Column, Date, ForeignKey, Integer, String
+from sqlalchemy import (JSON, Boolean, Column, Date, ForeignKey, Integer,
+                        String, Text)
 from sqlalchemy.orm import relationship
 
 from database import Base
@@ -69,3 +70,15 @@ class Shopping(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False)
     description = Column(String, nullable=True)
+
+
+class Subscription(Base):
+    __tablename__ = "subscriptions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    endpoint = Column(Text, nullable=False, unique=True)
+    expiration_time = Column(String, nullable=True)
+    keys = Column(JSON, nullable=False)  # Storing keys as JSONB
+
+    def __repr__(self):
+        return f"<Subscription(endpoint={self.endpoint[:30]}...)>"
