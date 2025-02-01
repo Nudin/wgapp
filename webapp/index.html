@@ -127,7 +127,20 @@
                 <div id="log-scroll"><ul id="log-list"></ul></div>
 
                 <h2>User Task Completion Statistics</h2>
-                <ul id="stats-section"></ul>
+                <div class="tab smalltabs">
+                    <button class="tablinks active" onclick="openTab(event, 'StatsTotal')">Total</button>
+                    <button class="tablinks" onclick="openTab(event, 'StatsCurrent')">Current Month</button>
+                    <button class="tablinks" onclick="openTab(event, 'StatsLast')">Last Month</button>
+                </div>
+                <div id="StatsTotal" class="tabcontent active">
+                    <ul id="stats-section"></ul>
+                </div>
+                <div id="StatsCurrent" class="tabcontent">
+                    <ul id="stats-section-current"></ul>
+                </div>
+                <div id="StatsLast" class="tabcontent">
+                    <ul id="stats-section-last"></ul>
+                </div>
             </div>
         </section>
 

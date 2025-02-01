@@ -198,19 +198,32 @@ async function fetchLogs () {
 
 // Function to fetch statistics and display them
 async function fetchStatistics () {
-  try {
-    const stats = await api.get('stats')
-    const statsSection = document.getElementById('stats-section')
-    statsSection.innerHTML = '' // Clear any previous content
+  const endpoints = [
+    { url: 'stats', sectionId: 'stats-section' },
+    { url: `stats/monthly?month=${new Date().getMonth() + 1}`, sectionId: 'stats-section-current' },
+    { url: `stats/monthly?month=${new Date().getMonth()}`, sectionId: 'stats-section-last' }
+  ]
 
-    stats.user_stats.forEach(stat => {
-      const statItem = document.createElement('li')
-      statItem.innerHTML = `<strong>${stat.username}</strong>: ${stat.task_count} tasks completed`
-      statsSection.appendChild(statItem)
-    })
-  } catch (error) {
-    console.error('Error fetching statistics:', error)
+  for (const { url, sectionId } of endpoints) {
+    try {
+      const stats = await api.get(url)
+      renderStatistics(stats.user_stats, sectionId)
+    } catch (error) {
+      console.error(`Error fetching statistics from ${url}:`, error)
+    }
   }
+}
+
+function renderStatistics (userStats, sectionId) {
+  const statsSection = document.getElementById(sectionId)
+  if (!statsSection) return
+
+  statsSection.innerHTML = '' // Clear previous content
+  userStats.forEach(({ username, task_count }) => {
+    const statItem = document.createElement('li')
+    statItem.innerHTML = `<strong>${username}</strong>: ${task_count} tasks completed`
+    statsSection.appendChild(statItem)
+  })
 }
 
 async function fetchTags () {
@@ -440,18 +453,18 @@ function editTodoButton (event) {
 
 // Tab Management
 function openTab (evt, tabName) {
-  const tabcontent = document.getElementsByClassName('tabcontent')
+  const target = evt.currentTarget
+  const tabcontent = target.parentElement.parentElement.querySelectorAll(':scope > .tabcontent')
   for (let i = 0; i < tabcontent.length; i++) {
     tabcontent[i].classList.remove('active')
   }
+  document.getElementById(tabName).classList.add('active')
 
-  const tablinks = document.getElementsByClassName('tablinks')
+  const tablinks = target.parentElement.getElementsByClassName('tablinks')
   for (let i = 0; i < tablinks.length; i++) {
     tablinks[i].classList.remove('active')
   }
-
-  document.getElementById(tabName).classList.add('active')
-  evt.currentTarget.classList.add('active')
+  target.classList.add('active')
 }
 
 // On page "Add todo" hide irrelevant fields

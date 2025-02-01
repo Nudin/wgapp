@@ -73,6 +73,13 @@ h2 {
     display: block; /* Show active tab content */
 }
 
+.smalltabs {
+  justify-content: start;
+}
+.smalltabs .tablinks {
+  padding: 5px;
+}
+
 form {
     display: flex;
     flex-direction: column;
