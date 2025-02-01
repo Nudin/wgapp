@@ -160,6 +160,7 @@ def _get_todos(
                 "next_due_date": todo.next_due_date,
                 "due": is_due,
                 "tags": todo.tags,
+                "archived": todo.archived,
             }
         )
 

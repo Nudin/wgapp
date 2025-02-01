@@ -112,7 +112,12 @@ function getActiveFilter (filter) {
 
 // Fetch Todos from API and display them
 async function fetchTodos () {
-  const todos = await api.get('todos/')
+  const archived = getActiveFilter('archived')
+  let url = 'todos/'
+  if (archived === 'true') {
+    url += '?archived=true'
+  }
+  const todos = await api.get(url)
   const tag = getActiveFilter('tag')
   const typefilter = getActiveFilter('type')
   todoList.innerHTML = ''
@@ -212,6 +217,7 @@ async function fetchTags () {
   const logs = await api.get('tags')
   createTagButtons(logs)
   createTypeDropdown()
+  createArchivedDropdown()
 }
 
 // Function to fetch and display shopping list
@@ -327,13 +333,14 @@ async function showDetails (event) {
 }
 
 // Function to open the modal with the current todo's data
-function openEditModal (todoId, name, description, tags, frequency, nextDueDate) {
+function openEditModal (todoId, name, description, tags, frequency, nextDueDate, archived) {
   document.getElementById('editId').value = todoId
   document.getElementById('editName').value = name
   document.getElementById('editDescription').value = description
   document.getElementById('editTags').value = tags
   document.getElementById('editFrequency').value = frequency
   document.getElementById('editDueDate').value = nextDueDate
+  document.getElementById('editArchived').checked = archived
   openModal('editModal')
 }
 document.getElementById('submitEditBtn').addEventListener('click', submitEditTodo)
@@ -426,7 +433,7 @@ async function submitEditTodo () {
 // Function to open the edit modal when the "Edit" button is clicked
 function editTodoButton (event) {
   const todo = event.target.closest('li')._data
-  openEditModal(todo.id, todo.name, todo.description, todo.tags, todo.frequency, todo.next_due_date)
+  openEditModal(todo.id, todo.name, todo.description, todo.tags, todo.frequency, todo.next_due_date, todo.archived)
 }
 
 /** * UI Elements ***/
@@ -479,32 +486,28 @@ async function addArticleToShoppingList (e) {
   fetchShopping()
 }
 async function shoppingDone (articleId) {
-  console.log(articleId)
   await api.delete(`shopping/${articleId}`)
   fetchShopping()
 }
 addShoppingArticle.addEventListener('submit', addArticleToShoppingList)
 
-/** * Tags ***/
+/** * Tags and Filters ***/
 
-function createTypeDropdown () {
-  const container = document.getElementById('typefilter')
-  const types = ['All Types', 'Repeating', 'Ondemand', 'Onetime']
-  const activeType = getActiveFilter('type')
-
+function createDropdown (selector, values, active, handler) {
+  const container = document.getElementById(selector)
   container.innerHTML = ''
   // Create a dropdown (select element)
   const dropdown = document.createElement('select')
   dropdown.className = 'type-dropdown'
 
   // Populate the dropdown with options
-  types.forEach(type => {
+  values.forEach(value => {
     const option = document.createElement('option')
-    option.value = type
-    option.textContent = type
+    option.value = value
+    option.textContent = value
 
     // Highlight the active option
-    if (type === activeType) {
+    if (value === active) {
       option.selected = true
     }
 
@@ -513,11 +516,24 @@ function createTypeDropdown () {
 
   // Add event listener for change event
   dropdown.addEventListener('change', (event) => {
-    handleTypeClick(event.target.value, dropdown)
+    handler(event.target.value, dropdown)
   })
 
   // Append the dropdown to the container
   container.appendChild(dropdown)
+}
+
+function createTypeDropdown () {
+  const values = ['All Types', 'Repeating', 'Ondemand', 'Onetime']
+  const activeType = getActiveFilter('type')
+  createDropdown('typefilter', values, activeType, handleTypeClick)
+}
+
+function createArchivedDropdown () {
+  const values = ['Active', 'Archived']
+  const activeType = getActiveFilter('archived')
+  const activeOption = activeType === 'true' ? 'Archived' : 'Active'
+  createDropdown('archivedfilter', values, activeOption, handleArchivedClick)
 }
 
 function createTagButtons (tagList) {
@@ -563,7 +579,7 @@ function handleTagClick (tag, button) {
   fetchTodos()
 }
 
-// Function to handle tag button click
+// Function to handle type dropdown click
 function handleTypeClick (type, dropdown) {
   const urlParams = new URLSearchParams(window.location.search)
   type = type.toLowerCase()
@@ -572,6 +588,19 @@ function handleTypeClick (type, dropdown) {
     urlParams.delete('type')
   } else {
     urlParams.set('type', type)
+  }
+
+  window.history.pushState({}, '', `${window.location.pathname}?${urlParams}`)
+  fetchTodos()
+}
+function handleArchivedClick (type, dropdown) {
+  const urlParams = new URLSearchParams(window.location.search)
+  type = type.toLowerCase()
+
+  if (type === 'active') {
+    urlParams.delete('archived')
+  } else {
+    urlParams.set('archived', 'true')
   }
 
   window.history.pushState({}, '', `${window.location.pathname}?${urlParams}`)

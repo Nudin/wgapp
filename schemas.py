@@ -22,6 +22,7 @@ class TodoResponse(BaseModel):
     next_due_date: date
     due: Optional[bool] = None
     tags: str = ""
+    archived: bool = False
 
     class Config:
         from_attributes = True
