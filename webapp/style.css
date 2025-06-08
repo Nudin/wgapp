@@ -389,3 +389,24 @@ select {
   background-color: black;
   color: #eee;
 }
+
+/* Emoji */
+#emoji {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  font-size: 80vmin;
+  color: #0009;
+  transform: translate(-50%, -50%) scale(0.5);
+  pointer-events: none;
+  user-select: none;
+  opacity: 0;
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;;
+}
+
+.visible {
+  opacity: 1 !important;
+  transform: translate(-50%, -50%) scale(1) !important;
+}

@@ -18,6 +18,14 @@ function unhide (element) {
   }
 }
 
+function showEmoji (duration = 1000) {
+  const emoji = document.getElementById('emoji')
+  emoji.classList.add('visible')
+  setTimeout(() => {
+    emoji.classList.remove('visible')
+  }, duration)
+}
+
 // API helper functions
 class API {
   apiBaseUrl = '/api' // Adjust the base URL as necessary
@@ -264,11 +272,13 @@ function fetchAll () {
 async function markTodoDone (todoId) {
   await api.put(`todos/${todoId}/done`, {})
   fetchAll()
+  showEmoji(300)
 }
 async function markTodoDoneByGuest (todoId) {
   const username = window.prompt('Please enter username')
   await api.put(`todos/${todoId}/done`, { username })
   fetchAll()
+  showEmoji(300)
 }
 
 // Postpone a Todo
